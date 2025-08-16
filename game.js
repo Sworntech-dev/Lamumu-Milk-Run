@@ -24,6 +24,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // Nesneleri tutmak için diziler
   const obstacles = [];
   const milkCartons = [];
+  const groundTiles = [];
 
   // Rastgele nesne oluşturmak için zamanlayıcı
   let spawnTimer = 0;
@@ -90,7 +91,8 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'hayBale', path: 'hay_bale.glb' },
         { name: 'tractor', path: 'tractor.glb' },
-        { name: 'windmill', path: 'handpainted_windmill_tower.glb' }
+        { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
+        { name: 'ground', path: 'dusty_foot_path_way_in_grass_garden.glb' }
     ];
 
     let loadedCount = 0;
@@ -111,7 +113,9 @@ window.addEventListener("DOMContentLoaded", () => {
                     }
                 } else if (model.name === 'milkCarton') {
                     milkCartonModel = gltf.scene;
-                    milkCartonModel.scale.set(0.5, 0.5, 0.5);
+                } else if (model.name === 'ground') {
+                    groundModel = gltf.scene;
+                    groundModel.scale.set(10, 10, 10);
                 } else {
                     obstacleModels.push(gltf.scene);
                 }
@@ -119,6 +123,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 loadedCount++;
                 if (loadedCount === modelsToLoad.length) {
                     // Tüm modeller yüklendiğinde animate döngüsünü başlat
+                    createInitialGroundTiles();
                     animate();
                 }
             },
@@ -130,6 +135,23 @@ window.addEventListener("DOMContentLoaded", () => {
             }
         );
     });
+  }
+  
+  // ----------------- Zemin Oluşturma Fonksiyonu -----------------
+  function createGroundTile(zPos) {
+      if (!groundModel) return;
+      const tile = groundModel.clone();
+      tile.position.set(0, -0.2, zPos);
+      tile.rotation.x = -Math.PI / 2;
+      scene.add(tile);
+      groundTiles.push(tile);
+  }
+
+  function createInitialGroundTiles() {
+      // Başlangıçta birkaç zemin parçası oluştur
+      for (let i = 0; i < 5; i++) {
+          createGroundTile(-i * 10); // 10 birim aralıklarla yerleştir
+      }
   }
 
   // ----------------- Oyun Başlatma Mantığı -----------------
@@ -162,7 +184,6 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       obstacle.position.set(lanes[laneIndex], 0.75, -50);
 
-      // Modelin kendisine göre scale ayarı
       if (randomModel.name === "hay_bale") {
           obstacle.scale.set(0.5, 0.5, 0.5);
       } else if (randomModel.name === "tractor") {
@@ -182,15 +203,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const laneIndex = Math.floor(Math.random() * lanes.length);
       milkCarton.position.set(lanes[laneIndex], 0.5, -50);
-      milkCarton.scale.set(0.5, 0.5, 0.5); // ölçek ayarı
+      milkCarton.scale.set(0.5, 0.5, 0.5);
       scene.add(milkCarton);
       milkCartons.push(milkCarton);
   }
 
   function spawnObjects() {
-      if (Math.random() > 0.6) { // %40 ihtimalle süt kutusu
+      if (Math.random() > 0.6) {
           createMilkCarton();
-      } else { // %60 ihtimalle engel
+      } else {
           createObstacle();
       }
   }
@@ -247,6 +268,19 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
+      // Zemin parçalarını hareket ettir ve tekrar oluştur
+      for(let i = groundTiles.length - 1; i >= 0; i--) {
+          const tile = groundTiles[i];
+          tile.position.z += mixer.timeScale * 0.1;
+          
+          if(tile.position.z > 5) {
+              scene.remove(tile);
+              groundTiles.splice(i, 1);
+              // Yeni bir parça ekle
+              createGroundTile(groundTiles[groundTiles.length - 1].position.z - 10);
+          }
+      }
+
       // Engelleri hareket ettir ve kontrol et
       for (let i = obstacles.length - 1; i >= 0; i--) {
           const obstacle = obstacles[i];
@@ -257,10 +291,9 @@ window.addEventListener("DOMContentLoaded", () => {
               obstacles.splice(i, 1);
           }
 
-          // Çarpışma kontrolü (Basit bounding box)
           if (
               Math.abs(player.position.x - obstacle.position.x) < 1 &&
-              Math.abs(player.position.z - obstacle.position.z) < 1.5 // Çarpışma z eksenini biraz genişlettik
+              Math.abs(player.position.z - obstacle.position.z) < 1.5
           ) {
               console.log("Game Over! Engelle çarpıştı.");
               endGame();
@@ -277,7 +310,6 @@ window.addEventListener("DOMContentLoaded", () => {
               milkCartons.splice(i, 1);
           }
 
-          // Süt kutusu toplama kontrolü
           if (
               Math.abs(player.position.x - milkCarton.position.x) < 1 &&
               Math.abs(player.position.z - milkCarton.position.z) < 1
