@@ -33,8 +33,9 @@ let obstacleModels = [];
 
 // Çizgiler için global değişkenler
 let laneLines = [];
-const lineSegmentCount = 10;
-const lineLength = 20;
+const lineDashLength = 5; // Bir çizgi parçasının uzunluğu
+const lineGap = 5; // İki çizgi arasındaki boşluk
+const totalLineLength = 100; // Yolun toplam görsel uzunluğu
 
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
@@ -79,7 +80,7 @@ function init() {
   scene.add(ground);
 
   // Şerit çizgilerini oluşturma
-  createLaneLines();
+  createDashedLaneLines();
 
   loadModels();
 
@@ -90,18 +91,22 @@ function init() {
   });
 }
 
-function createLaneLines() {
+function createDashedLaneLines() {
   const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-  const lineGeometry = new THREE.BoxGeometry(0.1, 0.1, lineLength);
+  const lineDashGeometry = new THREE.BoxGeometry(0.1, 0.1, lineDashLength);
+  const totalSegmentLength = lineDashLength + lineGap;
+  const numberOfDashes = Math.ceil(totalLineLength / totalSegmentLength);
 
-  for (let i = 0; i < lineSegmentCount; i++) {
-    const line1 = new THREE.Mesh(lineGeometry, lineMaterial);
-    line1.position.set(-1.5, 0.05, -50 - (i * lineLength));
+  for (let i = 0; i < numberOfDashes; i++) {
+    const zPosition = -i * totalSegmentLength;
+
+    const line1 = new THREE.Mesh(lineDashGeometry, lineMaterial);
+    line1.position.set(-1.5, 0.05, zPosition);
     scene.add(line1);
     laneLines.push(line1);
 
-    const line2 = new THREE.Mesh(lineGeometry, lineMaterial);
-    line2.position.set(1.5, 0.05, -50 - (i * lineLength));
+    const line2 = new THREE.Mesh(lineDashGeometry, lineMaterial);
+    line2.position.set(1.5, 0.05, zPosition);
     scene.add(line2);
     laneLines.push(line2);
   }
@@ -253,13 +258,15 @@ function animate() {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
 
-    // Çizgilerin hareketini oyuncunun pozisyonuna göre güncelleme
+    // Kesikli çizgilerin hareketini ve döngüsünü yönetme
     const speed = mixer.timeScale * 0.1;
+    const totalSegmentLength = lineDashLength + lineGap;
+    
     laneLines.forEach(line => {
       line.position.z += speed;
-      // Çizgiler oyuncunun arkasında kalacak şekilde pozisyonu döngüye sok
-      if (line.position.z > player.position.z) {
-        line.position.z -= lineLength * lineSegmentCount;
+      // Çizgi parçası oyuncunun görüş alanının önüne geçtiğinde onu arkaya taşı
+      if (line.position.z > player.position.z + 5) {
+        line.position.z -= totalSegmentLength * (laneLines.length / 2);
       }
     });
   }
