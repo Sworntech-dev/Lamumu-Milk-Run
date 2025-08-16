@@ -6,7 +6,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let scene, camera, renderer;
   let player = null;
-  let clock = new THREE.Clock();
+  let mixer; // Animasyonları yönetmek için
+  let animations; // Modelden gelen tüm animasyon kliplerini saklamak için
+  let clock = new THREE.Clock(); // Animasyonun delta zamanını hesaplamak için
   let gameStarted = false;
   let score = 0;
   let selectedCharacter = null;
@@ -70,10 +72,17 @@ window.addEventListener("DOMContentLoaded", () => {
               'cow_-_farm_animal_-_3december2022.glb',
               (gltf) => {
                   player = gltf.scene;
-                  // Adjust model properties
                   player.position.set(0, 0, 0); 
                   player.scale.set(1, 1, 1);
                   scene.add(player);
+
+                  // Animasyonları başlat
+                  animations = gltf.animations;
+                  if (animations && animations.length) {
+                      mixer = new THREE.AnimationMixer(player);
+                      const action = mixer.clipAction(animations[0]); 
+                      action.play();
+                  }
               },
               (xhr) => {
                   console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -102,11 +111,15 @@ window.addEventListener("DOMContentLoaded", () => {
   function animate() {
       requestAnimationFrame(animate);
       
-      // Render the scene even if the model is not loaded yet
+      // Animatörü güncelle
+      const delta = clock.getDelta();
+      if (mixer) {
+          mixer.update(delta);
+      }
+      
       renderer.render(scene, camera);
       
       if (!gameStarted || !player) {
-          // Wait for the player object to be created
           return;
       }
 
@@ -114,5 +127,4 @@ window.addEventListener("DOMContentLoaded", () => {
       score++;
       scoreBoard.innerText = `Score: ${score}`;
   }
-
 });
