@@ -283,7 +283,7 @@ function animate() {
     }
   }
   for (let i = milkCartons.length - 1; i >= 0; i--) {
-    const milkCarton = mislkCartons[i];
+    const milkCarton = milkCartons[i];
     milkCarton.position.z += mixer.timeScale * 0.1;
     if (milkCarton.position.z > 5) {
       scene.remove(milkCarton);
