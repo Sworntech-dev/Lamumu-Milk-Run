@@ -31,9 +31,6 @@ const spawnInterval = 1;
 let milkCartonModel;
 let obstacleModels = [];
 
-// Çizgiler için global değişkenler
-let laneLines = [];
-
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
@@ -68,16 +65,30 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Zemin oluşturma
+  // Zemin dokusunu oluşturma ve zemin oluşturma
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#228B22'; // Yeşil zemin
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Siyah şerit çizgilerini çizme
+  context.fillStyle = '#000000'; // Siyah çizgi rengi
+  context.fillRect(canvas.width * 0.25, 0, 5, canvas.height);
+  context.fillRect(canvas.width * 0.75, 0, 5, canvas.height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1000); // Sonsuz bir yol efekti için dokuyu tekrarlayın
+
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
-    new THREE.MeshStandardMaterial({ color: 0x228B22 })
+    new THREE.MeshStandardMaterial({ map: texture })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
-
-  // Şerit çizgilerini oluşturan fonksiyon
-  createLaneLines();
 
   loadModels();
 
@@ -86,22 +97,6 @@ function init() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
-}
-
-// Şerit çizgilerini oluşturup sahneye ekliyoruz
-function createLaneLines() {
-  const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-  const lineGeometry = new THREE.BoxGeometry(0.1, 0.1, 100);
-
-  const line1 = new THREE.Mesh(lineGeometry, lineMaterial);
-  line1.position.set(-1.5, 0.05, -50);
-  scene.add(line1);
-  laneLines.push(line1);
-
-  const line2 = new THREE.Mesh(lineGeometry, lineMaterial);
-  line2.position.set(1.5, 0.05, -50);
-  scene.add(line2);
-  laneLines.push(line2);
 }
 
 function loadModels() {
@@ -253,18 +248,6 @@ function animate() {
   renderer.render(scene, camera);
   if (!gameStarted || gameOver) {
     return;
-  }
-  
-  // Çizgilerin hareketini güncelleme
-  if (gameStarted && !gameOver) {
-    const speed = mixer.timeScale * 0.1;
-    laneLines.forEach(line => {
-      line.position.z += speed;
-      // Çizgiler kamera görüş alanından çıktığında onları yeniden başa sar
-      if (line.position.z > 5) {
-        line.position.z = -50;
-      }
-    });
   }
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
