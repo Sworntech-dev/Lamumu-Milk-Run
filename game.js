@@ -157,37 +157,39 @@ window.addEventListener("DOMContentLoaded", () => {
       if (obstacleModels.length === 0) return;
       
       const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
-      const obstacle = randomModel.clone();
       
       const laneIndex = Math.floor(Math.random() * lanes.length);
+      const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
 
       // Hay Balya kulesi oluşturma
       if (randomModel.name === "hayBale") {
           const hayBaleGroup = new THREE.Group();
 
           const hayBale1 = randomModel.clone();
-          hayBale1.scale.set(1, 1, 1); 
-          hayBale1.position.set(-0.75, 0, 0); 
+          hayBale1.scale.set(1.5, 1.5, 1.5); 
+          hayBale1.position.set(-1.5, 0, 0); 
           hayBaleGroup.add(hayBale1);
 
           const hayBale2 = randomModel.clone();
-          hayBale2.scale.set(1, 1, 1); 
-          hayBale2.position.set(0.75, 0, 0); 
+          hayBale2.scale.set(1.5, 1.5, 1.5); 
+          hayBale2.position.set(1.5, 0, 0); 
           hayBaleGroup.add(hayBale2);
 
           const hayBale3 = randomModel.clone();
-          hayBale3.scale.set(1, 1, 1); 
+          hayBale3.scale.set(1.5, 1.5, 1.5); 
           hayBale3.position.set(0, 1.5, 0);
           hayBaleGroup.add(hayBale3);
 
-          hayBaleGroup.position.set(lanes[laneIndex], 0, -50);
+          hayBaleGroup.position.copy(obstaclePosition);
           hayBaleGroup.rotation.y = Math.PI * 1.5;
+          hayBaleGroup.position.y = -0.4;
           scene.add(hayBaleGroup);
           obstacles.push(hayBaleGroup);
 
       } else {
           // Diğer engelleri normal şekilde oluşturma
-          obstacle.position.set(lanes[laneIndex], 0, -50);
+          const obstacle = randomModel.clone();
+          obstacle.position.copy(obstaclePosition);
           obstacle.rotation.y = Math.PI * 1.5;
 
           // Modelin kendisine göre scale ve pozisyon ayarı
@@ -231,7 +233,7 @@ window.addEventListener("DOMContentLoaded", () => {
           const action = mixer.clipAction(walkProudClip);
           action.setLoop(THREE.LoopRepeat);
           action.play();
-          mixer.timeScale = 2;
+          mixer.timeScale = 1;
       }
       
       score = 0;
@@ -259,7 +261,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const delta = clock.getDelta();
       if (mixer) {
           if (gameStarted) {
-            mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); // Oyun hızını artırma (2 katına kadar)
+            mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05);
           }
           mixer.update(delta);
       }
