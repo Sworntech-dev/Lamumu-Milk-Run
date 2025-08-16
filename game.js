@@ -1,3 +1,4 @@
+// DOM elemanlarını seçme
 const overlay = document.getElementById("overlay");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
 const scoreBoard = document.getElementById("scoreBoard");
@@ -5,6 +6,7 @@ const startButton = document.getElementById("startButton");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
 
+// Oyun değişkenleri
 let scene, camera, renderer;
 let player = null;
 let mixer;
@@ -14,18 +16,22 @@ let gameStarted = false;
 let gameOver = false;
 let score = 0;
 
+// Şerit pozisyonları
 const lanes = [-3, 0, 3];
 let currentLane = 1;
 
+// Nesneleri tutacak diziler
 const obstacles = [];
 const milkCartons = [];
 
 let spawnTimer = 0;
 const spawnInterval = 1;
 
+// 3D modelleri
 let milkCartonModel;
 let obstacleModels = [];
 
+// Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
 
@@ -51,6 +57,7 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
+  // Işıklandırma
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(5, 10, 7);
   scene.add(light);
@@ -58,6 +65,7 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
+  // Zemin oluşturma
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
     new THREE.MeshStandardMaterial({ color: 0x228B22 })
@@ -76,11 +84,13 @@ function init() {
 
 function loadModels() {
   const loader = new THREE.GLTFLoader();
+  // Yeni saman balyası modelini ekledik
   const modelsToLoad = [
     { name: 'cow', path: 'dancing_cow.glb' },
     { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
     { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
-    { name: 'scarecrow', path: 'scarecrow_for_farm.glb' }
+    { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
+    { name: 'hay_bales', path: 'hay_bales.glb' }
   ];
 
   let loadedCount = 0;
@@ -125,7 +135,6 @@ function loadModels() {
 
 startButton.addEventListener("click", () => {
   overlay.style.display = "none";
-
   const danceClip = animations.find(clip => clip.name === 'dance');
   if (danceClip) {
     const action = mixer.clipAction(danceClip);
@@ -133,7 +142,6 @@ startButton.addEventListener("click", () => {
     action.clampWhenFinished = true;
     action.play();
   }
-
   setTimeout(() => {
     startGame();
   }, 4000);
@@ -145,24 +153,22 @@ restartButton.addEventListener("click", () => {
 
 function createObstacle() {
   if (obstacleModels.length === 0) return;
-
   const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
-
   const laneIndex = Math.floor(Math.random() * lanes.length);
   const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
-
   const obstacle = randomModel.clone();
   obstacle.position.copy(obstaclePosition);
   obstacle.rotation.y = Math.PI * 1.5;
-
   if (randomModel.name === "windmill") {
     obstacle.scale.set(1, 1, 1);
     obstacle.position.y = 1;
   } else if (randomModel.name === "scarecrow") {
     obstacle.scale.set(1, 1, 1);
     obstacle.position.y = 0;
+  } else if (randomModel.name === "hay_bales") {
+    obstacle.scale.set(1.5, 1.5, 1.5);
+    obstacle.position.y = 0;
   }
-
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
@@ -170,7 +176,6 @@ function createObstacle() {
 function createMilkCarton() {
   if (!milkCartonModel) return;
   const milkCarton = milkCartonModel.clone();
-
   const laneIndex = Math.floor(Math.random() * lanes.length);
   milkCarton.position.set(lanes[laneIndex], 0.5, -50);
   milkCarton.scale.set(0.5, 0.5, 0.5);
@@ -193,14 +198,12 @@ function startGame() {
     const action = mixer.clipAction(walkProudClip);
     action.setLoop(THREE.LoopRepeat);
     action.play();
-    mixer.timeScale = 2;
+    mixer.timeScale = 2; // Başlangıç hızını 2x'e ayarlar
   }
-
   score = 0;
   gameStarted = true;
   gameOver = false;
   scoreBoard.innerText = `Score: ${score}`;
-
   spawnObjects();
   setInterval(spawnObjects, 1000);
 }
@@ -215,35 +218,28 @@ function endGame() {
 
 function animate() {
   requestAnimationFrame(animate);
-
   const delta = clock.getDelta();
   if (mixer) {
     if (gameStarted) {
-      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
+      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); // Maksimum hızı 4x'e ayarlar
     }
     mixer.update(delta);
   }
-
   if (player && !gameOver) {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
   }
-
   renderer.render(scene, camera);
-
   if (!gameStarted || gameOver) {
     return;
   }
-
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
     obstacle.position.z += mixer.timeScale * 0.1;
-
     if (obstacle.position.z > 5) {
       scene.remove(obstacle);
       obstacles.splice(i, 1);
     }
-
     if (
       Math.abs(player.position.x - obstacle.position.x) < 1 &&
       Math.abs(player.position.z - obstacle.position.z) < 1.5
@@ -252,16 +248,13 @@ function animate() {
       endGame();
     }
   }
-
   for (let i = milkCartons.length - 1; i >= 0; i--) {
     const milkCarton = milkCartons[i];
     milkCarton.position.z += mixer.timeScale * 0.1;
-
     if (milkCarton.position.z > 5) {
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
     }
-
     if (
       Math.abs(player.position.x - milkCarton.position.x) < 1 &&
       Math.abs(player.position.z - milkCarton.position.z) < 1
