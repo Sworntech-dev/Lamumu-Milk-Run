@@ -34,7 +34,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
       // Camera
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 2, 5);
+      // Kamera pozisyonunu daha yukarı ve geriye ayarla (y ve z değerlerini artır)
+      camera.position.set(0, 3, 7); 
 
       // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -69,7 +70,7 @@ window.addEventListener("DOMContentLoaded", () => {
           // Load Model
           const loader = new THREE.GLTFLoader();
           loader.load(
-              'dancing_cow.glb', // Yeni modelinizin adı
+              'dancing_cow.glb', 
               (gltf) => {
                   player = gltf.scene;
                   
@@ -84,7 +85,6 @@ window.addEventListener("DOMContentLoaded", () => {
                   if (animations && animations.length) {
                       mixer = new THREE.AnimationMixer(player);
                       
-                      // walk_proud animasyonunu bul ve oynat
                       const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
 
                       if (walkProudClip) {
@@ -126,6 +126,8 @@ window.addEventListener("DOMContentLoaded", () => {
       
       const delta = clock.getDelta();
       if (mixer) {
+          // Animasyon hızını zamanla artır
+          mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05); // Hızı 2'ye kadar artırır
           mixer.update(delta);
       }
       
