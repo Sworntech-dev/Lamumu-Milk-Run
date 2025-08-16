@@ -277,7 +277,7 @@ function animate() {
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
-    obstacle.position.z += mixer.timeScale * 0.1;
+    obstacle.position.z += mixer.timeScale * 0.2;
     if (obstacle.position.z > 5) {
       scene.remove(obstacle);
       obstacles.splice(i, 1);
