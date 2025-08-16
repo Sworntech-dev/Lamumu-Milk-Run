@@ -161,13 +161,13 @@ function createObstacle() {
   obstacle.rotation.y = Math.PI * 1.5;
   if (randomModel.name === "windmill") {
     obstacle.scale.set(1, 1, 1);
-    obstacle.position.y = 1;
+    obstacle.position.y = 0.85;
   } else if (randomModel.name === "scarecrow") {
     obstacle.scale.set(1, 1, 1);
     obstacle.position.y = 0;
   } else if (randomModel.name === "hay_bales") {
     obstacle.scale.set(1.5, 1.5, 1.5);
-    obstacle.position.y = 1;
+    obstacle.position.y = 1.1;
   }
   scene.add(obstacle);
   obstacles.push(obstacle);
