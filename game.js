@@ -161,7 +161,7 @@ function createObstacle() {
   obstacle.rotation.y = Math.PI * 1.5;
   if (randomModel.name === "windmill") {
     obstacle.scale.set(1, 1, 1);
-    obstacle.position.y = 0.7;
+    obstacle.position.y = 0;
   } else if (randomModel.name === "scarecrow") {
     obstacle.scale.set(1, 1, 1);
     obstacle.position.y = 0;
