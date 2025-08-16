@@ -33,8 +33,8 @@ let obstacleModels = [];
 
 // Çizgiler için global değişkenler
 let laneLines = [];
-const lineSegmentCount = 10; // Yolun sürekli görünmesi için çizgi sayısı
-const lineLength = 20; // Her bir çizgi parçasının uzunluğu
+const lineSegmentCount = 10;
+const lineLength = 20;
 
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
@@ -253,11 +253,12 @@ function animate() {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
 
-    // Çizgilerin hareketini güncelleme
+    // Çizgilerin hareketini oyuncunun pozisyonuna göre güncelleme
     const speed = mixer.timeScale * 0.1;
     laneLines.forEach(line => {
       line.position.z += speed;
-      if (line.position.z > player.position.z + 5) {
+      // Çizgiler oyuncunun arkasında kalacak şekilde pozisyonu döngüye sok
+      if (line.position.z > player.position.z) {
         line.position.z -= lineLength * lineSegmentCount;
       }
     });
