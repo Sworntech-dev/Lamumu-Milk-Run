@@ -161,19 +161,19 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       obstacle.position.set(lanes[laneIndex], 0, -50);
 
-      // Engelleri ekrana doğru döndürme
-      obstacle.rotation.y = Math.PI;
+      // Engelleri 90 derece döndürerek ekrana bakmasını sağlama
+      obstacle.rotation.y = Math.PI / 2;
 
       // Modelin kendisine göre scale ve pozisyon ayarı
       if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
       } else if (randomModel.name === "scarecrow") {
-          obstacle.scale.set(3, 3, 3); // 3 katı arttırıldı
-          obstacle.position.y = 1.5; // Zemine tam oturması için ayarlandı
+          obstacle.scale.set(3.5, 3.5, 3.5); // Boyut artışı
+          obstacle.position.y = 1.5; 
       } else if (randomModel.name === "hayBale") {
-          obstacle.scale.set(1.5, 1.5, 1.5); // 5 katı arttırıldı
-          obstacle.position.y = -0.4; // Zemine tam oturması için ayarlandı
+          obstacle.scale.set(2, 2, 2); // Boyut artışı
+          obstacle.position.y = -0.4;
       }
       
       scene.add(obstacle);
@@ -279,7 +279,7 @@ window.addEventListener("DOMContentLoaded", () => {
           }
 
           if (
-              Math.abs(player.position.x - milkCarton.position.x) < 1 &&
+              Math.abs(player.position.x - milkCartun.position.x) < 1 &&
               Math.abs(player.position.z - milkCarton.position.z) < 1
           ) {
               score += 10;
