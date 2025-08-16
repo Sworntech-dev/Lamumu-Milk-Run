@@ -17,23 +17,18 @@ window.addEventListener("DOMContentLoaded", () => {
   let gameOver = false;
   let score = 0;
   
-  // Şeritler ve pozisyon
   const lanes = [-3, 0, 3];
   let currentLane = 1;
   
-  // Nesneleri tutmak için diziler
   const obstacles = [];
   const milkCartons = [];
 
-  // Rastgele nesne oluşturmak için zamanlayıcı
   let spawnTimer = 0;
   const spawnInterval = 1;
 
-  // Yüklenecek 3D modelleri saklamak için değişkenler
   let milkCartonModel;
   let obstacleModels = [];
 
-  // Klavye Kontrolleri
   window.addEventListener('keydown', (event) => {
     if (!gameStarted || gameOver) return;
 
@@ -50,20 +45,16 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ----------------- Init Scene -----------------
   function init() {
-      // Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87ceeb);
 
-      // Camera
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(0, 3, 7); 
 
-      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // Lights
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(5, 10, 7);
       scene.add(light);
@@ -71,7 +62,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
 
-      // Geri döndüğümüz eski düz yeşil zemin
+      // Düz yeşil zemin
       const ground = new THREE.Mesh(
           new THREE.PlaneGeometry(20, 1000),
           new THREE.MeshStandardMaterial({ color: 0x228B22 })
@@ -79,7 +70,6 @@ window.addEventListener("DOMContentLoaded", () => {
       ground.rotation.x = -Math.PI / 2;
       scene.add(ground);
 
-      // Modelleri yükle
       loadModels();
 
       window.addEventListener("resize", () => {
@@ -137,6 +127,28 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
   
+  // ----------------- Oyun Başlatma Mantığı -----------------
+  startButton.addEventListener("click", () => {
+      console.log("Start button clicked!"); // Hata ayıklama mesajı
+      overlay.style.display = "none";
+      
+      const danceClip = animations.find(clip => clip.name === 'dance');
+      if (danceClip) {
+          const action = mixer.clipAction(danceClip);
+          action.setLoop(THREE.LoopOnce);
+          action.clampWhenFinished = true;
+          action.play();
+      }
+
+      setTimeout(() => {
+          startGame();
+      }, 4000);
+  });
+
+  restartButton.addEventListener("click", () => {
+      location.reload();
+  });
+
   // ----------------- Nesne Oluşturma Fonksiyonları -----------------
   function createObstacle() {
       if (obstacleModels.length === 0) return;
@@ -231,7 +243,6 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
-      // Engelleri hareket ettir ve kontrol et
       for (let i = obstacles.length - 1; i >= 0; i--) {
           const obstacle = obstacles[i];
           obstacle.position.z += mixer.timeScale * 0.1;
@@ -250,7 +261,6 @@ window.addEventListener("DOMContentLoaded", () => {
           }
       }
 
-      // Süt kutularını hareket ettir ve kontrol et
       for (let i = milkCartons.length - 1; i >= 0; i--) {
           const milkCarton = milkCartons[i];
           milkCarton.position.z += mixer.timeScale * 0.1;
