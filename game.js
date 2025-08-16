@@ -9,38 +9,26 @@ let score = 0;
 // HTML elementleri
 const overlay = document.getElementById("overlay");
 const scoreBoard = document.getElementById("scoreBoard");
-const startButton = document.getElementById("startButton");
-const gameOverScreen = document.getElementById("gameOverScreen");
-const finalScore = document.getElementById("finalScore");
-const restartButton = document.getElementById("restartButton");
 
 let selectedCharacter = null;
 
 // ----------------- Karakter Seçimi -----------------
-document.getElementById("charGreen").addEventListener("click", () => {
+document.getElementById("charGreen").addEventListener("click", ()=>{
     selectedCharacter = "green";
-    startButton.disabled = false;
+    startGame();
 });
-
-document.getElementById("charBlack").addEventListener("click", () => {
+document.getElementById("charBlack").addEventListener("click", ()=>{
     selectedCharacter = "black";
-    startButton.disabled = false;
+    startGame();
 });
 
 // ----------------- Start Game -----------------
-startButton.addEventListener("click", () => {
-    if (!selectedCharacter) return;
-
-    overlay.classList.add("hidden");
+function startGame(){
+    overlay.style.display = "none";
     init();
     gameStarted = true;
     animate();
-});
-
-// ----------------- Restart -----------------
-restartButton.addEventListener("click", () => {
-    location.reload();
-});
+}
 
 // ----------------- Init Scene -----------------
 function init() {
@@ -62,18 +50,18 @@ function init() {
         new THREE.PlaneGeometry(20, 100),
         new THREE.MeshStandardMaterial({ color: 0x228B22 })
     );
-    ground.rotation.x = -Math.PI / 2;
+    ground.rotation.x = -Math.PI/2;
     scene.add(ground);
 
     // Karakter ekle
     const geometry = new THREE.BoxGeometry(1,1,1);
-    const material = new THREE.MeshStandardMaterial({ color: selectedCharacter === "green" ? 0x00ff00 : 0x000000 });
+    const material = new THREE.MeshStandardMaterial({ color: selectedCharacter==="green"?0x00ff00:0x000000 });
     player = new THREE.Mesh(geometry, material);
-    player.position.set(0, 0.5, 0);
+    player.position.set(0,0.5,0);
     scene.add(player);
 
-    window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+    window.addEventListener("resize", ()=>{
+        camera.aspect = window.innerWidth/window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
@@ -82,7 +70,7 @@ function init() {
 // ----------------- Animate -----------------
 function animate() {
     requestAnimationFrame(animate);
-    if (!gameStarted || !player) return;
+    if(!gameStarted || !player) return;
 
     score++;
     scoreBoard.innerText = `Score: ${score}`;

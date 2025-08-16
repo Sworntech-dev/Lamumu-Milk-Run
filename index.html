@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Cow Runner - Simple Version</title>
+  <title>Cow Runner - Click Character</title>
   <style>
     body {
       margin: 0;
@@ -11,7 +11,7 @@
       background: #87ceeb;
     }
 
-    #overlay, #gameOverScreen {
+    #overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -26,17 +26,14 @@
       z-index: 10;
     }
 
-    #overlay.hidden, #gameOverScreen.hidden {
-      display: none;
-    }
-
-    button {
-      padding: 12px 20px;
-      margin: 10px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
+    .charBox {
+      width: 80px;
+      height: 80px;
+      margin: 20px;
+      display: inline-block;
       cursor: pointer;
+      border: 3px solid white;
+      border-radius: 8px;
     }
 
     #scoreBoard {
@@ -57,23 +54,15 @@
   <!-- Menü ekranı -->
   <div id="overlay">
     <h1>Cow Runner</h1>
-    <p>Select your character:</p>
+    <p>Click a character to start:</p>
     <div>
-      <button id="charGreen">Green Box</button>
-      <button id="charBlack">Black Box</button>
+      <div id="charGreen" class="charBox" style="background-color: green;"></div>
+      <div id="charBlack" class="charBox" style="background-color: black;"></div>
     </div>
-    <button id="startButton" disabled>Start Game</button>
   </div>
 
   <!-- Skor göstergesi -->
   <div id="scoreBoard">Score: 0</div>
-
-  <!-- Oyun Bitti ekranı -->
-  <div id="gameOverScreen" class="hidden">
-    <h1>Game Over</h1>
-    <p id="finalScore"></p>
-    <button id="restartButton">Restart</button>
-  </div>
 
   <script type="module" src="game.js"></script>
 </body>
