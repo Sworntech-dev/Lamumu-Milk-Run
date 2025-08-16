@@ -83,7 +83,7 @@ function init() {
 }
 
 function loadModels() {
-  const loader = new GLTFLoader();
+  const loader = new THREE.GLTFLoader();
   // Yeni saman balyası modelini ekledik
   const modelsToLoad = [
     { name: 'cow', path: 'dancing_cow.glb' },
@@ -167,7 +167,7 @@ function createObstacle() {
     obstacle.position.y = 0;
   } else if (randomModel.name === "hay_bales") {
     obstacle.scale.set(1.5, 1.5, 1.5);
-    obstacle.position.y = 0.75; // Burayı düzelttik
+    obstacle.position.y = 1;
   }
   scene.add(obstacle);
   obstacles.push(obstacle);
