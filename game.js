@@ -39,6 +39,9 @@ window.addEventListener("DOMContentLoaded", () => {
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(5, 10, 7);
       scene.add(light);
+      
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Ortam ışığı ekleyelim
+      scene.add(ambientLight);
 
       const ground = new THREE.Mesh(
           new THREE.PlaneGeometry(20, 100),
@@ -48,11 +51,32 @@ window.addEventListener("DOMContentLoaded", () => {
       scene.add(ground);
 
       // Karakteri seçime göre oluştur
-      const geometry = new THREE.BoxGeometry(1,1,1);
-      const material = new THREE.MeshStandardMaterial({ color: selectedCharacter==="green"?0x00ff00:0x000000 });
-      player = new THREE.Mesh(geometry, material);
-      player.position.set(0,0.5,0);
-      scene.add(player);
+      if (selectedCharacter === "green") {
+          // Yeşil küp
+          const geometry = new THREE.BoxGeometry(1, 1, 1);
+          const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+          player = new THREE.Mesh(geometry, material);
+          player.position.set(0, 0.5, 0);
+          scene.add(player);
+      } else if (selectedCharacter === "black") {
+          // Model yükleme
+          const loader = new THREE.GLTFLoader();
+          loader.load(
+              'cow_-_farm_animal_-_3december2022.glb',
+              (gltf) => {
+                  player = gltf.scene;
+                  player.position.set(0, 0, 0); // Modelin pozisyonunu ayarla
+                  player.scale.set(1, 1, 1); // İhtiyaç olursa boyutu ayarla
+                  scene.add(player);
+              },
+              (xhr) => {
+                  console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+              },
+              (error) => {
+                  console.error('An error happened', error);
+              }
+          );
+      }
 
       window.addEventListener("resize", ()=>{
           camera.aspect = window.innerWidth/window.innerHeight;
@@ -71,7 +95,11 @@ window.addEventListener("DOMContentLoaded", () => {
   // ----------------- Animate -----------------
   function animate() {
       requestAnimationFrame(animate);
-      if(!gameStarted || !player) return;
+      if(!gameStarted || !player) {
+          // Model yüklenmediyse bekle
+          renderer.render(scene, camera);
+          return;
+      }
 
       score++;
       scoreBoard.innerText = `Score: ${score}`;
