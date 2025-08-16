@@ -161,8 +161,8 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       obstacle.position.set(lanes[laneIndex], 0, -50);
 
-      // Engelleri 90 derece döndürerek ekrana bakmasını sağlama
-      obstacle.rotation.y = Math.PI / 2;
+      // Engelleri 270 derece döndürerek ekrana bakmasını sağlama
+      obstacle.rotation.y = Math.PI * 1.5;
 
       // Modelin kendisine göre scale ve pozisyon ayarı
       if (randomModel.name === "windmill") {
@@ -279,7 +279,7 @@ window.addEventListener("DOMContentLoaded", () => {
           }
 
           if (
-              Math.abs(player.position.x - milkCartun.position.x) < 1 &&
+              Math.abs(player.position.x - milkCarton.position.x) < 1 &&
               Math.abs(player.position.z - milkCarton.position.z) < 1
           ) {
               score += 10;
