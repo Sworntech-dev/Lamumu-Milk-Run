@@ -72,8 +72,10 @@ window.addEventListener("DOMContentLoaded", () => {
               'cow_run.glb', 
               (gltf) => {
                   player = gltf.scene;
-                  // Başlangıç pozisyonunu ayarlıyoruz
+                  
+                  // İneği doğru pozisyona ve rotasyona getiriyoruz
                   player.position.set(0, 0, 0); 
+                  player.rotation.y = Math.PI; // İneği kameraya doğru çevirir
                   player.scale.set(1, 1, 1);
                   scene.add(player);
 
@@ -123,9 +125,10 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
       }
       
-      // Animasyonun ileri hareketini iptal et ve ineği yerinde tut
-      player.position.z = 0;
-      player.position.x = 0; // İneğin sola kaymasını da engeller
+      // *** ROOT MOTİONU İPTAL ETME ÇÖZÜMÜ ***
+      // Animasyonun pozisyon değişimini her karede sıfırlıyoruz
+      player.position.set(0, 0, 0);
+      player.rotation.y = Math.PI;
 
       // Your game logic goes here
       score++;
