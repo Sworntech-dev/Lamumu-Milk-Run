@@ -1,6 +1,5 @@
 // game.js
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer, player;
 let obstacles = [], milks = [];
@@ -41,14 +40,13 @@ function init(){
     ground.position.z = 0;
     scene.add(ground);
 
-    // Player Load
-    const loader = new GLTFLoader();
-    loader.load('cow/scene.gltf', gltf => {
-        player = gltf.scene;
-        player.scale.set(0.5,0.5,0.5);
-        player.position.set(lanes[currentLane],0,0);
-        scene.add(player);
-    });
+    // Player = geçici kutu
+    player = new THREE.Mesh(
+        new THREE.BoxGeometry(1,1,1),
+        new THREE.MeshPhongMaterial({color:0xffffff})
+    );
+    player.position.set(lanes[currentLane],0,0);
+    scene.add(player);
 }
 
 function spawnItem(){
