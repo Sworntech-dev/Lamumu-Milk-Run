@@ -90,8 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'cow', path: 'dancing_cow.glb' },
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
-        { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
-        { name: 'hayBale', path: 'hay_bales.glb' }
+        { name: 'scarecrow', path: 'scarecrow_for_farm.glb' }
     ];
 
     let loadedCount = 0;
@@ -161,16 +160,12 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
 
-      // Tek bir engel oluştur
       const obstacle = randomModel.clone();
       obstacle.position.copy(obstaclePosition);
       obstacle.rotation.y = Math.PI * 1.5;
 
       // Modelin kendisine göre ölçek ve pozisyon ayarı
-      if (randomModel.name === "hayBale") {
-          obstacle.scale.set(1, 1, 1);
-          obstacle.position.y = -0.4;
-      } else if (randomModel.name === "windmill") {
+      if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
       } else if (randomModel.name === "scarecrow") {
