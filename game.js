@@ -1,3 +1,8 @@
+// Bu dosya, HTML'deki <script> etiketlerine uyum sağlamak için
+// ES6 modül import'ları (import ...) kullanmaz. Bunun yerine, 
+// Three.js ve GLTFLoader kütüphanelerinin global olarak erişilebilir olduğunu varsayar.
+
+// DOM elemanlarını seçme
 const overlay = document.getElementById("overlay");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
 const scoreBoard = document.getElementById("scoreBoard");
@@ -5,6 +10,7 @@ const startButton = document.getElementById("startButton");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
 
+// Oyun değişkenleri
 let scene, camera, renderer;
 let player = null;
 let mixer;
@@ -14,18 +20,22 @@ let gameStarted = false;
 let gameOver = false;
 let score = 0;
 
+// Şerit pozisyonları
 const lanes = [-3, 0, 3];
 let currentLane = 1;
 
+// Nesneleri tutacak diziler
 const obstacles = [];
 const milkCartons = [];
 
 let spawnTimer = 0;
 const spawnInterval = 1;
 
+// 3D modelleri
 let milkCartonModel;
 let obstacleModels = [];
 
+// Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
 
@@ -40,6 +50,7 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
+// ----------------- Sahneyi Başlatma Fonksiyonu -----------------
 function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87ceeb);
@@ -51,6 +62,7 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
+  // Işıklandırma
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(5, 10, 7);
   scene.add(light);
@@ -58,6 +70,7 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
+  // Zemin oluşturma
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
     new THREE.MeshStandardMaterial({ color: 0x228B22 })
@@ -74,8 +87,9 @@ function init() {
   });
 }
 
+// ----------------- Modelleri Yükleme Fonksiyonu -----------------
 function loadModels() {
-  const loader = new THREE.GLTFLoader();
+  const loader = new GLTFLoader(); // Global GLTFLoader objesini kullan
   const modelsToLoad = [
     { name: 'cow', path: 'dancing_cow.glb' },
     { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
@@ -123,9 +137,10 @@ function loadModels() {
   });
 }
 
+// ----------------- Oyun Başlatma Olay Dinleyicileri -----------------
 startButton.addEventListener("click", () => {
   overlay.style.display = "none";
-
+  
   const danceClip = animations.find(clip => clip.name === 'dance');
   if (danceClip) {
     const action = mixer.clipAction(danceClip);
@@ -143,6 +158,7 @@ restartButton.addEventListener("click", () => {
   location.reload();
 });
 
+// ----------------- Nesne Oluşturma Fonksiyonları -----------------
 function createObstacle() {
   if (obstacleModels.length === 0) return;
 
@@ -186,6 +202,7 @@ function spawnObjects() {
   }
 }
 
+// ----------------- Oyun Başlatma Fonksiyonu -----------------
 function startGame() {
   const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
   if (walkProudClip) {
@@ -193,7 +210,7 @@ function startGame() {
     const action = mixer.clipAction(walkProudClip);
     action.setLoop(THREE.LoopRepeat);
     action.play();
-    mixer.timeScale = 1;
+    mixer.timeScale = 2; // Başlangıç hızı 2x
   }
 
   score = 0;
@@ -205,6 +222,7 @@ function startGame() {
   setInterval(spawnObjects, 1000);
 }
 
+// ----------------- Game Over Fonksiyonu -----------------
 function endGame() {
   gameOver = true;
   gameStarted = false;
@@ -213,13 +231,15 @@ function endGame() {
   gameOverOverlay.style.display = "flex";
 }
 
+// ----------------- Oyun Döngüsü -----------------
 function animate() {
   requestAnimationFrame(animate);
 
   const delta = clock.getDelta();
   if (mixer) {
     if (gameStarted) {
-      mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05);
+      // Hızı 4x'e kadar artırır
+      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); 
     }
     mixer.update(delta);
   }
@@ -275,4 +295,5 @@ function animate() {
   }
 }
 
+// Sayfa yüklendiğinde init fonksiyonunu çağır
 init();
