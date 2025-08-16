@@ -59,10 +59,10 @@
     <h1>Cow Runner</h1>
     <p>Select your character:</p>
     <div>
-      <button onclick="selectCharacter('green')">Green Box</button>
-      <button onclick="selectCharacter('black')">Black Box</button>
+      <button id="charGreen">Green Box</button>
+      <button id="charBlack">Black Box</button>
     </div>
-    <button id="startButton" onclick="startGame()" disabled>Start Game</button>
+    <button id="startButton" disabled>Start Game</button>
   </div>
 
   <!-- Skor göstergesi -->
@@ -72,7 +72,7 @@
   <div id="gameOverScreen" class="hidden">
     <h1>Game Over</h1>
     <p id="finalScore"></p>
-    <button onclick="restartGame()">Restart</button>
+    <button id="restartButton">Restart</button>
   </div>
 
   <script type="module" src="game.js"></script>
