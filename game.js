@@ -77,7 +77,7 @@ function spawnItem(){
     if(Math.random()<0.02){
         let obsLane = lanes[Math.floor(Math.random()*3)];
         let box = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({color:0x8B4513}));
-        box.position.set(obsLane,0.5,-25); // player’a doğru gel
+        box.position.set(obsLane,0.5,-25);
         scene.add(box);
         obstacles.push(box);
     }
@@ -109,7 +109,7 @@ function gameOver(){
 function animate(){
     requestAnimationFrame(animate);
 
-    if(!gameStarted) return; // oyun başlamadıysa dur
+    if(!gameStarted) return;
 
     // hız yavaş başla, sonra artar
     if(gameSpeed<maxSpeed) gameSpeed += 0.00003;
@@ -123,10 +123,13 @@ function animate(){
 
     spawnItem();
 
+    const playerBox = new THREE.Box3().setFromObject(player);
+
     // Obstacles
     obstacles.forEach((obs,i)=>{
-        obs.position.z += gameSpeed*5; // player sabit, obs player’a geliyor
-        if(Math.abs(player.position.z - obs.position.z)<0.5 && player.position.x===obs.position.x){
+        obs.position.z += gameSpeed*5; 
+        const obsBox = new THREE.Box3().setFromObject(obs);
+        if(playerBox.intersectsBox(obsBox)){
             gameOver();
         }
         if(obs.position.z>5){ scene.remove(obs); obstacles.splice(i,1); }
@@ -135,7 +138,8 @@ function animate(){
     // Milk bottles
     milks.forEach((milk,i)=>{
         milk.position.z += gameSpeed*5;
-        if(Math.abs(player.position.z - milk.position.z)<0.5 && player.position.x===milk.position.x){
+        const milkBox = new THREE.Box3().setFromObject(milk);
+        if(playerBox.intersectsBox(milkBox)){
             score++;
             updateScoreboard();
             scene.remove(milk);
