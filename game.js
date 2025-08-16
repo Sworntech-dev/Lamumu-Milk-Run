@@ -16,7 +16,8 @@ const keys = {};
 let gameStarted = false;
 let gameSpeed = 0; 
 const maxSpeed = 0.06; 
-const gameSpeedIncrement = 0.00001; // daha yavaş artış
+const gameSpeedIncrement = 0.00001; 
+let spawnCooldown = 0; // Z bazlı spawn aralığı
 
 startBtn.addEventListener('click', () => {
     startGame();
@@ -32,6 +33,7 @@ function startGame(){
     player.position.set(lanes[1],0,0);
     currentLane = 1;
     targetX = lanes[currentLane];
+    spawnCooldown = 0;
     updateScoreboard();
 }
 
@@ -57,7 +59,6 @@ function init(){
     light.position.set(10,10,10);
     scene.add(light);
 
-    // Ground
     const groundGeo = new THREE.PlaneGeometry(10,50);
     const groundMat = new THREE.MeshPhongMaterial({color:0x228B22});
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -65,12 +66,11 @@ function init(){
     ground.position.z = 0;
     scene.add(ground);
 
-    // Player = kutu
     player = new THREE.Mesh(
         new THREE.BoxGeometry(1,1,1),
         new THREE.MeshPhongMaterial({color:0xffffff})
     );
-    player.position.set(lanes[currentLane],0,0); 
+    player.position.set(lanes[currentLane],0,0);
     scene.add(player);
 }
 
@@ -121,21 +121,22 @@ function animate(){
 
     if(!gameStarted) return;
 
-    // yavaş artan hız
     if(gameSpeed < maxSpeed) gameSpeed += gameSpeedIncrement;
 
-    // WASD lane switch
     if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
     if(keys['d'] && currentLane<2){ currentLane++; keys['d']=false; targetX=lanes[currentLane]; }
 
-    // Smooth lane movement
     player.position.x += (targetX - player.position.x)*0.2;
 
-    spawnItem();
+    // Spawn cooldown kontrolü
+    spawnCooldown -= gameSpeed*5;
+    if(spawnCooldown <= 0){
+        spawnItem();
+        spawnCooldown = 5; // minimum Z aralığı
+    }
 
     const playerBox = new THREE.Box3().setFromObject(player);
 
-    // Obstacles
     obstacles.forEach((obs,i)=>{
         obs.position.z += gameSpeed*5;
         const obsBox = new THREE.Box3().setFromObject(obs);
@@ -145,7 +146,6 @@ function animate(){
         if(obs.position.z>5){ scene.remove(obs); obstacles.splice(i,1); }
     });
 
-    // Milk bottles
     milks.forEach((milk,i)=>{
         milk.position.z += gameSpeed*5;
         const milkBox = new THREE.Box3().setFromObject(milk);
