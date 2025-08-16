@@ -2,125 +2,100 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer;
-let player, playerType = null; 
-let mixer;
+let player = null;
+let mixer = null;
 let clock = new THREE.Clock();
-
 let gameStarted = false;
-let speed = 0.1;
-let objects = [];
-let score = 0;
-let scoreElement = document.getElementById("scoreValue");
-let startButton = document.getElementById("startButton");
-let gameOverScreen = document.getElementById("gameOverScreen");
-let finalScore = document.getElementById("finalScore");
-let restartButton = document.getElementById("restartButton");
+let selectedCharacter = null;
+
+// HTML elementleri
+const startBtn = document.getElementById("startButton");
+const overlay = document.getElementById("overlay");
+const scoreBoard = document.getElementById("scoreBoard");
+const gameOverScreen = document.getElementById("gameOverScreen");
+const finalScore = document.getElementById("finalScore");
 
 const loader = new GLTFLoader();
 
+// -------- Karakter Seçim Fonksiyonu --------
+window.selectCharacter = function(type) {
+  selectedCharacter = type;
+  startBtn.disabled = false; // karakter seçildi, start aktif
+  console.log("Selected character:", type);
+}
+
+// -------- Start Game Fonksiyonu --------
+window.startGame = function() {
+  if (!selectedCharacter) return;
+
+  overlay.classList.add("hidden");
+  init();
+  gameStarted = true;
+  animate();
+}
+
+// -------- Restart Game --------
+window.restartGame = function() {
+  location.reload();
+}
+
+// -------- Init Scene --------
 function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xa0d0ff);
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2, 5);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 2, 5);
 
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-    let light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 10, 7.5);
-    scene.add(light);
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(5, 10, 7);
+  scene.add(light);
 
-    let ambient = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambient);
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 1000),
+    new THREE.MeshStandardMaterial({ color: 0x228B22 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
 
-    let ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(20, 1000),
-        new THREE.MeshPhongMaterial({ color: 0x228822 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
+  // Karakter ekle
+  if (selectedCharacter === "box") {
+    const geometry = new THREE.BoxGeometry(1,1,1);
+    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    player = new THREE.Mesh(geometry, material);
+    player.position.set(0,0.5,0);
+    scene.add(player);
+  } else if (selectedCharacter === "cow") {
+    loader.load("cow_-_farm_animal_-_3december2022.glb", (gltf)=>{
+      player = gltf.scene;
+      player.scale.set(0.5,0.5,0.5);
+      player.position.set(0,0,0);
+      scene.add(player);
+      mixer = new THREE.AnimationMixer(player);
+      if(gltf.animations.length>0) mixer.clipAction(gltf.animations[0]).play();
+    });
+  }
 
-    document.getElementById("chooseCube").addEventListener("click", () => selectCharacter("cube"));
-    document.getElementById("chooseCow").addEventListener("click", () => selectCharacter("cow"));
-    startButton.addEventListener("click", startGame);
-    restartButton.addEventListener("click", restartGame);
-
-    animate();
-}
-
-function selectCharacter(type) {
-    playerType = type;
-    startButton.disabled = false; 
-    console.log("Selected:", type);
-}
-
-function startGame() {
-    if (!playerType) return;
-
-    document.getElementById("menu").style.display = "none";
-    score = 0;
-    scoreElement.innerText = score;
-    gameStarted = true;
-    speed = 0.1;
-
-    if (playerType === "cube") {
-        let geometry = new THREE.BoxGeometry(1, 1, 1);
-        let material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-        player = new THREE.Mesh(geometry, material);
-        player.position.set(0, 0.5, 0);
-        scene.add(player);
-    } else if (playerType === "cow") {
-        loader.load(
-            "cow_-_farm_animal_-_3december2022.glb",
-            (gltf) => {
-                player = gltf.scene;
-                player.scale.set(0.5, 0.5, 0.5);
-                player.position.set(0, 0, 0);
-                scene.add(player);
-                mixer = new THREE.AnimationMixer(player);
-                if (gltf.animations.length > 0) {
-                    mixer.clipAction(gltf.animations[0]).play();
-                }
-            },
-            undefined,
-            (error) => {
-                console.error("Error loading cow:", error);
-            }
-        );
-    }
-}
-
-function restartGame() {
-    window.location.reload();
-}
-
-function gameOver() {
-    gameStarted = false;
-    gameOverScreen.style.display = "block";
-    finalScore.innerText = score;
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    let delta = clock.getDelta();
-
-    if (gameStarted && player) {
-        score++;
-        scoreElement.innerText = score;
-
-        if (mixer) mixer.update(delta);
-    }
-
-    renderer.render(scene, camera);
-}
-
-window.addEventListener("resize", () => {
+  window.addEventListener("resize", ()=>{
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  });
+}
 
-init();
+// -------- Animate --------
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (!gameStarted) return;
+  if (!player) return;
+
+  const delta = clock.getDelta();
+  if (mixer) mixer.update(delta);
+
+  renderer.render(scene, camera);
+}
