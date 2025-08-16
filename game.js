@@ -90,8 +90,8 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'cow', path: 'dancing_cow.glb' },
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
-        { name: 'chickenCoop', path: 'chicken_coop.glb' },
-        { name: 'scarecrow', path: 'scarecrow_for_farm.glb' }
+        { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
+        { name: 'waterWell', path: 'old_water_well.glb' }
     ];
 
     let loadedCount = 0;
@@ -165,10 +165,10 @@ window.addEventListener("DOMContentLoaded", () => {
       if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
-      } else if (randomModel.name === "chickenCoop") {
-          obstacle.scale.set(0.5, 0.5, 0.5); // Boyut küçültüldü
-          obstacle.position.y = -0.2;
       } else if (randomModel.name === "scarecrow") {
+          obstacle.scale.set(0.5, 0.5, 0.5);
+          obstacle.position.y = 0;
+      } else if (randomModel.name === "waterWell") {
           obstacle.scale.set(0.5, 0.5, 0.5);
           obstacle.position.y = 0;
       }
