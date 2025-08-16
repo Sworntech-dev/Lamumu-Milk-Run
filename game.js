@@ -15,7 +15,8 @@ const startBtn = document.getElementById('start-btn');
 const keys = {};
 let gameStarted = false;
 let gameSpeed = 0; 
-const maxSpeed = 0.08; 
+const maxSpeed = 0.06; 
+const gameSpeedIncrement = 0.00001; // daha yavaş artış
 
 startBtn.addEventListener('click', () => {
     startGame();
@@ -25,7 +26,7 @@ function startGame(){
     gameStarted = true;
     overlay.style.display = 'none';
     score = 0;
-    gameSpeed = 0.02; // yavaş başla
+    gameSpeed = 0.02; 
     obstacles.forEach(o=>scene.remove(o)); obstacles=[];
     milks.forEach(m=>scene.remove(m)); milks=[];
     player.position.set(lanes[1],0,0);
@@ -69,22 +70,31 @@ function init(){
         new THREE.BoxGeometry(1,1,1),
         new THREE.MeshPhongMaterial({color:0xffffff})
     );
-    player.position.set(lanes[currentLane],0,0); // Z sabit
+    player.position.set(lanes[currentLane],0,0); 
     scene.add(player);
 }
 
 function spawnItem(){
+    const zPos = -25;
+
+    // Engel spawn
     if(Math.random()<0.02){
-        let obsLane = lanes[Math.floor(Math.random()*3)];
-        let box = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({color:0x8B4513}));
-        box.position.set(obsLane,0.5,-25);
+        const freeLanes = lanes.slice();
+        const laneIndex = Math.floor(Math.random() * freeLanes.length);
+        const obsLane = freeLanes.splice(laneIndex,1)[0];
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({color:0x8B4513}));
+        box.position.set(obsLane,0.5,zPos);
         scene.add(box);
         obstacles.push(box);
     }
+
+    // Süt spawn
     if(Math.random()<0.02){
-        let milkLane = lanes[Math.floor(Math.random()*3)];
-        let milk = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), new THREE.MeshPhongMaterial({color:0xFFFF00}));
-        milk.position.set(milkLane,0.25,-25);
+        const freeLanes = lanes.slice();
+        const laneIndex = Math.floor(Math.random() * freeLanes.length);
+        const milkLane = freeLanes.splice(laneIndex,1)[0];
+        const milk = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), new THREE.MeshPhongMaterial({color:0xFFFF00}));
+        milk.position.set(milkLane,0.25,zPos);
         scene.add(milk);
         milks.push(milk);
     }
@@ -111,8 +121,8 @@ function animate(){
 
     if(!gameStarted) return;
 
-    // hız yavaş başla, sonra artar
-    if(gameSpeed<maxSpeed) gameSpeed += 0.00003;
+    // yavaş artan hız
+    if(gameSpeed < maxSpeed) gameSpeed += gameSpeedIncrement;
 
     // WASD lane switch
     if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
@@ -127,7 +137,7 @@ function animate(){
 
     // Obstacles
     obstacles.forEach((obs,i)=>{
-        obs.position.z += gameSpeed*5; 
+        obs.position.z += gameSpeed*5;
         const obsBox = new THREE.Box3().setFromObject(obs);
         if(playerBox.intersectsBox(obsBox)){
             gameOver();
