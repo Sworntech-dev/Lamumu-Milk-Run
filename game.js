@@ -14,8 +14,8 @@ const startBtn = document.getElementById('start-btn');
 
 const keys = {};
 let gameStarted = false;
-let gameSpeed = 0; // başlangıçta 0
-const maxSpeed = 0.08; // maksimum hız
+let gameSpeed = 0; 
+const maxSpeed = 0.08; 
 
 startBtn.addEventListener('click', () => {
     startGame();
@@ -25,7 +25,7 @@ function startGame(){
     gameStarted = true;
     overlay.style.display = 'none';
     score = 0;
-    gameSpeed = 0.02; // oyun yavaş başlar
+    gameSpeed = 0.02; // yavaş başla
     obstacles.forEach(o=>scene.remove(o)); obstacles=[];
     milks.forEach(m=>scene.remove(m)); milks=[];
     player.position.set(lanes[1],0,0);
@@ -69,7 +69,7 @@ function init(){
         new THREE.BoxGeometry(1,1,1),
         new THREE.MeshPhongMaterial({color:0xffffff})
     );
-    player.position.set(lanes[currentLane],0,0);
+    player.position.set(lanes[currentLane],0,0); // Z sabit
     scene.add(player);
 }
 
@@ -77,7 +77,7 @@ function spawnItem(){
     if(Math.random()<0.02){
         let obsLane = lanes[Math.floor(Math.random()*3)];
         let box = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({color:0x8B4513}));
-        box.position.set(obsLane,0.5,-25);
+        box.position.set(obsLane,0.5,-25); // player’a doğru gel
         scene.add(box);
         obstacles.push(box);
     }
@@ -109,9 +109,9 @@ function gameOver(){
 function animate(){
     requestAnimationFrame(animate);
 
-    if(!gameStarted) return; // oyun başlamadıysa hiçbir şey yapma
+    if(!gameStarted) return; // oyun başlamadıysa dur
 
-    // hız yavaş başlar, sonra artar
+    // hız yavaş başla, sonra artar
     if(gameSpeed<maxSpeed) gameSpeed += 0.00003;
 
     // WASD lane switch
@@ -120,13 +120,12 @@ function animate(){
 
     // Smooth lane movement
     player.position.x += (targetX - player.position.x)*0.2;
-    player.position.z -= gameSpeed*5;
 
     spawnItem();
 
     // Obstacles
     obstacles.forEach((obs,i)=>{
-        obs.position.z += gameSpeed*5;
+        obs.position.z += gameSpeed*5; // player sabit, obs player’a geliyor
         if(Math.abs(player.position.z - obs.position.z)<0.5 && player.position.x===obs.position.x){
             gameOver();
         }
