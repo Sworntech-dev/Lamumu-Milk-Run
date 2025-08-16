@@ -69,7 +69,7 @@ window.addEventListener("DOMContentLoaded", () => {
           // Load Model
           const loader = new THREE.GLTFLoader();
           loader.load(
-              'cow_run.glb', // Yeni modelinizin adı
+              'cow_run.glb', 
               (gltf) => {
                   player = gltf.scene;
                   player.position.set(0, 0, 0); 
@@ -111,7 +111,6 @@ window.addEventListener("DOMContentLoaded", () => {
   function animate() {
       requestAnimationFrame(animate);
       
-      // Animatörü güncelle
       const delta = clock.getDelta();
       if (mixer) {
           mixer.update(delta);
@@ -122,6 +121,9 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!gameStarted || !player) {
           return;
       }
+      
+      // Animasyonun ileri hareketini iptal et ve ineği yerinde tut
+      player.position.z = 0;
 
       // Your game logic goes here
       score++;
