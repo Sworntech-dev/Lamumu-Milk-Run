@@ -29,6 +29,11 @@ window.addEventListener("DOMContentLoaded", () => {
   let spawnTimer = 0;
   const spawnInterval = 1;
 
+  // Yüklenecek 3D modelleri saklamak için değişkenler
+  let milkCartonModel;
+  let obstacleModels = [];
+  let groundModel;
+
   // Klavye Kontrolleri
   window.addEventListener('keydown', (event) => {
     if (!gameStarted || gameOver) return;
@@ -67,46 +72,64 @@ window.addEventListener("DOMContentLoaded", () => {
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
 
-      // Ground (Yol)
-      const ground = new THREE.Mesh(
-          new THREE.PlaneGeometry(20, 1000),
-          new THREE.MeshStandardMaterial({ color: 0x228B22 })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      scene.add(ground);
-
-      // Cow Modelini Yükle
-      const loader = new THREE.GLTFLoader();
-      loader.load(
-          'dancing_cow.glb', 
-          (gltf) => {
-              player = gltf.scene;
-              
-              player.position.set(lanes[currentLane], 0, 0); 
-              player.rotation.y = Math.PI;
-              player.scale.set(1, 1, 1);
-              scene.add(player);
-
-              animations = gltf.animations;
-              if (animations && animations.length) {
-                  mixer = new THREE.AnimationMixer(player);
-              }
-              
-              animate();
-          },
-          (xhr) => {
-              console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-          },
-          (error) => {
-              console.error('An error happened', error);
-          }
-      );
+      // Modelleri yükle
+      loadModels();
 
       window.addEventListener("resize", () => {
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
       });
+  }
+
+  // ----------------- Modelleri Yükleme Fonksiyonu -----------------
+  function loadModels() {
+    const loader = new THREE.GLTFLoader();
+    const modelsToLoad = [
+        { name: 'cow', path: 'dancing_cow.glb' },
+        { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
+        { name: 'hayBale', path: 'hay_bale.glb' },
+        { name: 'tractor', path: 'tractor.glb' },
+        { name: 'windmill', path: 'handpainted_windmill_tower.glb' }
+    ];
+
+    let loadedCount = 0;
+
+    modelsToLoad.forEach(model => {
+        loader.load(
+            model.path,
+            (gltf) => {
+                if (model.name === 'cow') {
+                    player = gltf.scene;
+                    player.position.set(lanes[currentLane], 0, 0); 
+                    player.rotation.y = Math.PI;
+                    player.scale.set(1, 1, 1);
+                    scene.add(player);
+                    animations = gltf.animations;
+                    if (animations && animations.length) {
+                        mixer = new THREE.AnimationMixer(player);
+                    }
+                } else if (model.name === 'milkCarton') {
+                    milkCartonModel = gltf.scene;
+                    milkCartonModel.scale.set(0.5, 0.5, 0.5);
+                } else {
+                    obstacleModels.push(gltf.scene);
+                }
+
+                loadedCount++;
+                if (loadedCount === modelsToLoad.length) {
+                    // Tüm modeller yüklendiğinde animate döngüsünü başlat
+                    animate();
+                }
+            },
+            (xhr) => {
+                console.log(`Model yükleniyor: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
+            },
+            (error) => {
+                console.error(`Bir hata oluştu: ${model.path}`, error);
+            }
+        );
+    });
   }
 
   // ----------------- Oyun Başlatma Mantığı -----------------
@@ -132,32 +155,43 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ----------------- Nesne Oluşturma Fonksiyonları -----------------
   function createObstacle() {
-      const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-      const material = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-      const obstacle = new THREE.Mesh(geometry, material);
+      if (obstacleModels.length === 0) return;
+      const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
+      const obstacle = randomModel.clone();
       
       const laneIndex = Math.floor(Math.random() * lanes.length);
       obstacle.position.set(lanes[laneIndex], 0.75, -50);
+
+      // Modelin kendisine göre scale ayarı
+      if (randomModel.name === "hay_bale") {
+          obstacle.scale.set(0.5, 0.5, 0.5);
+      } else if (randomModel.name === "tractor") {
+          obstacle.scale.set(0.7, 0.7, 0.7);
+      } else if (randomModel.name === "windmill") {
+          obstacle.scale.set(1, 1, 1);
+          obstacle.position.y = 1;
+      }
+      
       scene.add(obstacle);
       obstacles.push(obstacle);
   }
 
   function createMilkCarton() {
-      const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
-      const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      const milkCarton = new THREE.Mesh(geometry, material);
+      if (!milkCartonModel) return;
+      const milkCarton = milkCartonModel.clone();
 
       const laneIndex = Math.floor(Math.random() * lanes.length);
       milkCarton.position.set(lanes[laneIndex], 0.5, -50);
+      milkCarton.scale.set(0.5, 0.5, 0.5); // ölçek ayarı
       scene.add(milkCarton);
       milkCartons.push(milkCarton);
   }
 
   function spawnObjects() {
-      if (Math.random() > 0.5) {
-          createObstacle();
-      } else {
+      if (Math.random() > 0.6) { // %40 ihtimalle süt kutusu
           createMilkCarton();
+      } else { // %60 ihtimalle engel
+          createObstacle();
       }
   }
 
@@ -213,6 +247,7 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
+      // Engelleri hareket ettir ve kontrol et
       for (let i = obstacles.length - 1; i >= 0; i--) {
           const obstacle = obstacles[i];
           obstacle.position.z += mixer.timeScale * 0.1;
@@ -222,15 +257,17 @@ window.addEventListener("DOMContentLoaded", () => {
               obstacles.splice(i, 1);
           }
 
+          // Çarpışma kontrolü (Basit bounding box)
           if (
               Math.abs(player.position.x - obstacle.position.x) < 1 &&
-              Math.abs(player.position.z - obstacle.position.z) < 1
+              Math.abs(player.position.z - obstacle.position.z) < 1.5 // Çarpışma z eksenini biraz genişlettik
           ) {
               console.log("Game Over! Engelle çarpıştı.");
               endGame();
           }
       }
 
+      // Süt kutularını hareket ettir ve kontrol et
       for (let i = milkCartons.length - 1; i >= 0; i--) {
           const milkCarton = milkCartons[i];
           milkCarton.position.z += mixer.timeScale * 0.1;
@@ -240,6 +277,7 @@ window.addEventListener("DOMContentLoaded", () => {
               milkCartons.splice(i, 1);
           }
 
+          // Süt kutusu toplama kontrolü
           if (
               Math.abs(player.position.x - milkCarton.position.x) < 1 &&
               Math.abs(player.position.z - milkCarton.position.z) < 1
