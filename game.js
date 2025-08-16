@@ -91,7 +91,7 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
         { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
-        { name: 'hayBale', path: 'hay_bales.glb' } // Yeni saman modeli
+        { name: 'hayBale', path: 'hay_bales.glb' }
     ];
 
     let loadedCount = 0;
@@ -161,14 +161,14 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
 
-      // Sadece tek bir saman balyası oluşturma
+      // Engeli oluştur
       const obstacle = randomModel.clone();
       obstacle.position.copy(obstaclePosition);
       obstacle.rotation.y = Math.PI * 1.5;
 
-      // Modelin kendisine göre scale ve pozisyon ayarı
+      // Modelin kendisine göre ölçek ve pozisyon ayarı
       if (randomModel.name === "hayBale") {
-          obstacle.scale.set(1, 1, 1); // Yeni saman balyası için ölçek
+          obstacle.scale.set(1, 1, 1);
           obstacle.position.y = -0.4;
       } else if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
@@ -209,7 +209,7 @@ window.addEventListener("DOMContentLoaded", () => {
           const action = mixer.clipAction(walkProudClip);
           action.setLoop(THREE.LoopRepeat);
           action.play();
-          mixer.timeScale = 1; // Başlangıç hızı 1x
+          mixer.timeScale = 1;
       }
       
       score = 0;
@@ -237,7 +237,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const delta = clock.getDelta();
       if (mixer) {
           if (gameStarted) {
-            mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05); // Oyun hızını 2x'e kadar artırma
+            mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05);
           }
           mixer.update(delta);
       }
