@@ -5,11 +5,29 @@ let scene, camera, renderer, player;
 let obstacles = [], milks = [];
 let score = 0;
 const lanes = [-2,0,2]; // left, center, right
-let currentLane = 1; // start in middle
+let currentLane = 1;
 let targetX = lanes[currentLane];
 
 const scoreboard = document.getElementById('scoreboard');
+const overlay = document.getElementById('overlay');
+const overlayText = document.getElementById('overlay-text');
+const startBtn = document.getElementById('start-btn');
+
 const keys = {};
+let gameStarted = false;
+let gameSpeed = 0.02; // başlangıç hızı
+const maxSpeed = 0.12; // maksimum hız
+
+startBtn.addEventListener('click', () => {
+    gameStarted = true;
+    overlay.style.display = 'none';
+    score = 0;
+    obstacles.forEach(o=>scene.remove(o)); obstacles=[];
+    milks.forEach(m=>scene.remove(m)); milks=[];
+    gameSpeed = 0.02;
+    updateScoreboard();
+});
+
 window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
@@ -75,35 +93,44 @@ function updateScoreboard(){
     scoreboard.innerText = `Score: ${score} | WL Chance: ${wlChance}%`;
 }
 
+function gameOver(){
+    gameStarted = false;
+    overlayText.innerText = `Game Over!\nScore: ${score}`;
+    startBtn.innerText = "Restart";
+    overlay.style.display = 'flex';
+}
+
 function animate(){
     requestAnimationFrame(animate);
 
-    if(player){
-        // WASD lane switch
-        if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
-        if(keys['d'] && currentLane<2){ currentLane++; keys['d']=false; targetX=lanes[currentLane]; }
+    if(!gameStarted) return;
 
-        // Smooth lane movement
-        player.position.x += (targetX - player.position.x)*0.2;
-        player.position.z -= 0.1; // auto-forward
-    }
+    // hız yavaş başla, sonra art
+    if(gameSpeed<maxSpeed) gameSpeed += 0.00005;
+
+    // WASD lane switch
+    if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
+    if(keys['d'] && currentLane<2){ currentLane++; keys['d']=false; targetX=lanes[currentLane]; }
+
+    // Smooth lane movement
+    player.position.x += (targetX - player.position.x)*0.2;
+    player.position.z -= gameSpeed*5; // auto-forward
 
     spawnItem();
 
     // Obstacles
     obstacles.forEach((obs,i)=>{
-        obs.position.z +=0.1;
-        if(player && Math.abs(player.position.z - obs.position.z)<0.5 && player.position.x===obs.position.x){
-            alert('Game Over! Score: '+score);
-            window.location.reload();
+        obs.position.z += gameSpeed*5;
+        if(Math.abs(player.position.z - obs.position.z)<0.5 && player.position.x===obs.position.x){
+            gameOver();
         }
         if(obs.position.z>5){ scene.remove(obs); obstacles.splice(i,1); }
     });
 
     // Milk bottles
     milks.forEach((milk,i)=>{
-        milk.position.z +=0.1;
-        if(player && Math.abs(player.position.z - milk.position.z)<0.5 && player.position.x===milk.position.x){
+        milk.position.z += gameSpeed*5;
+        if(Math.abs(player.position.z - milk.position.z)<0.5 && player.position.x===milk.position.x){
             score++;
             updateScoreboard();
             scene.remove(milk);
@@ -112,5 +139,6 @@ function animate(){
         if(milk.position.z>5){ scene.remove(milk); milks.splice(i,1); }
     });
 
+    updateScoreboard();
     renderer.render(scene,camera);
 }
