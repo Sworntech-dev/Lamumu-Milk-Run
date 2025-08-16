@@ -161,49 +161,25 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
 
-      // Hay Balya kulesi oluşturma
+      // Sadece tek bir saman balyası oluşturma
+      const obstacle = randomModel.clone();
+      obstacle.position.copy(obstaclePosition);
+      obstacle.rotation.y = Math.PI * 1.5;
+
+      // Modelin kendisine göre scale ve pozisyon ayarı
       if (randomModel.name === "hayBale") {
-          const hayBaleGroup = new THREE.Group();
-
-          const hayBale1 = randomModel.clone();
-          hayBale1.scale.set(1, 1, 1); 
-          hayBale1.position.set(-1.5, 0, 0); 
-          hayBaleGroup.add(hayBale1);
-
-          const hayBale2 = randomModel.clone();
-          hayBale2.scale.set(1, 1, 1); 
-          hayBale2.position.set(1.5, 0, 0); 
-          hayBaleGroup.add(hayBale2);
-
-          const hayBale3 = randomModel.clone();
-          hayBale3.scale.set(1, 1, 1); 
-          hayBale3.position.set(0, 1.5, 0);
-          hayBaleGroup.add(hayBale3);
-
-          hayBaleGroup.position.copy(obstaclePosition);
-          hayBaleGroup.rotation.y = Math.PI * 1.5;
-          hayBaleGroup.position.y = -0.4;
-          scene.add(hayBaleGroup);
-          obstacles.push(hayBaleGroup);
-
-      } else {
-          // Diğer engelleri normal şekilde oluşturma
-          const obstacle = randomModel.clone();
-          obstacle.position.copy(obstaclePosition);
-          obstacle.rotation.y = Math.PI * 1.5;
-
-          // Modelin kendisine göre scale ve pozisyon ayarı
-          if (randomModel.name === "windmill") {
-              obstacle.scale.set(1, 1, 1);
-              obstacle.position.y = 1;
-          } else if (randomModel.name === "scarecrow") {
-              obstacle.scale.set(3.5, 3.5, 3.5); 
-              obstacle.position.y = 1.5; 
-          }
-          
-          scene.add(obstacle);
-          obstacles.push(obstacle);
+          obstacle.scale.set(1, 1, 1); // Yeni saman balyası için ölçek
+          obstacle.position.y = -0.4;
+      } else if (randomModel.name === "windmill") {
+          obstacle.scale.set(1, 1, 1);
+          obstacle.position.y = 1;
+      } else if (randomModel.name === "scarecrow") {
+          obstacle.scale.set(3.5, 3.5, 3.5); 
+          obstacle.position.y = 1.5; 
       }
+      
+      scene.add(obstacle);
+      obstacles.push(obstacle);
   }
 
   function createMilkCarton() {
