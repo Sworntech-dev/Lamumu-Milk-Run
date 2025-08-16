@@ -155,29 +155,53 @@ window.addEventListener("DOMContentLoaded", () => {
   // ----------------- Nesne Oluşturma Fonksiyonları -----------------
   function createObstacle() {
       if (obstacleModels.length === 0) return;
+      
       const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
       const obstacle = randomModel.clone();
       
       const laneIndex = Math.floor(Math.random() * lanes.length);
-      obstacle.position.set(lanes[laneIndex], 0, -50);
 
-      // Engelleri 270 derece döndürerek ekrana bakmasını sağlama
-      obstacle.rotation.y = Math.PI * 1.5;
+      // Hay Balya kulesi oluşturma
+      if (randomModel.name === "hayBale") {
+          const hayBaleGroup = new THREE.Group();
 
-      // Modelin kendisine göre scale ve pozisyon ayarı
-      if (randomModel.name === "windmill") {
-          obstacle.scale.set(1, 1, 1);
-          obstacle.position.y = 1;
-      } else if (randomModel.name === "scarecrow") {
-          obstacle.scale.set(3.5, 3.5, 3.5); // Boyut artışı
-          obstacle.position.y = 1.5; 
-      } else if (randomModel.name === "hayBale") {
-          obstacle.scale.set(2, 2, 2); // Boyut artışı
-          obstacle.position.y = -0.4;
+          const hayBale1 = randomModel.clone();
+          hayBale1.scale.set(1, 1, 1); 
+          hayBale1.position.set(-0.75, 0, 0); 
+          hayBaleGroup.add(hayBale1);
+
+          const hayBale2 = randomModel.clone();
+          hayBale2.scale.set(1, 1, 1); 
+          hayBale2.position.set(0.75, 0, 0); 
+          hayBaleGroup.add(hayBale2);
+
+          const hayBale3 = randomModel.clone();
+          hayBale3.scale.set(1, 1, 1); 
+          hayBale3.position.set(0, 1.5, 0);
+          hayBaleGroup.add(hayBale3);
+
+          hayBaleGroup.position.set(lanes[laneIndex], 0, -50);
+          hayBaleGroup.rotation.y = Math.PI * 1.5;
+          scene.add(hayBaleGroup);
+          obstacles.push(hayBaleGroup);
+
+      } else {
+          // Diğer engelleri normal şekilde oluşturma
+          obstacle.position.set(lanes[laneIndex], 0, -50);
+          obstacle.rotation.y = Math.PI * 1.5;
+
+          // Modelin kendisine göre scale ve pozisyon ayarı
+          if (randomModel.name === "windmill") {
+              obstacle.scale.set(1, 1, 1);
+              obstacle.position.y = 1;
+          } else if (randomModel.name === "scarecrow") {
+              obstacle.scale.set(3.5, 3.5, 3.5); 
+              obstacle.position.y = 1.5; 
+          }
+          
+          scene.add(obstacle);
+          obstacles.push(obstacle);
       }
-      
-      scene.add(obstacle);
-      obstacles.push(obstacle);
   }
 
   function createMilkCarton() {
@@ -235,7 +259,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const delta = clock.getDelta();
       if (mixer) {
           if (gameStarted) {
-            mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); 
+            mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); // Oyun hızını artırma (2 katına kadar)
           }
           mixer.update(delta);
       }
