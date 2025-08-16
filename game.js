@@ -72,6 +72,7 @@ window.addEventListener("DOMContentLoaded", () => {
               'cow_run.glb', 
               (gltf) => {
                   player = gltf.scene;
+                  // Başlangıç pozisyonunu ayarlıyoruz
                   player.position.set(0, 0, 0); 
                   player.scale.set(1, 1, 1);
                   scene.add(player);
@@ -124,6 +125,7 @@ window.addEventListener("DOMContentLoaded", () => {
       
       // Animasyonun ileri hareketini iptal et ve ineği yerinde tut
       player.position.z = 0;
+      player.position.x = 0; // İneğin sola kaymasını da engeller
 
       // Your game logic goes here
       score++;
