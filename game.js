@@ -1,10 +1,9 @@
-// game.js
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
 
 let scene, camera, renderer, player;
 let obstacles = [], milks = [];
 let score = 0;
-const lanes = [-2,0,2]; // left, center, right
+const lanes = [-2,0,2]; 
 let currentLane = 1;
 let targetX = lanes[currentLane];
 
@@ -15,18 +14,25 @@ const startBtn = document.getElementById('start-btn');
 
 const keys = {};
 let gameStarted = false;
-let gameSpeed = 0.02; // başlangıç hızı
-const maxSpeed = 0.12; // maksimum hız
+let gameSpeed = 0; // başlangıçta 0
+const maxSpeed = 0.08; // maksimum hız
 
 startBtn.addEventListener('click', () => {
+    startGame();
+});
+
+function startGame(){
     gameStarted = true;
     overlay.style.display = 'none';
     score = 0;
+    gameSpeed = 0.02; // oyun yavaş başlar
     obstacles.forEach(o=>scene.remove(o)); obstacles=[];
     milks.forEach(m=>scene.remove(m)); milks=[];
-    gameSpeed = 0.02;
+    player.position.set(lanes[1],0,0);
+    currentLane = 1;
+    targetX = lanes[currentLane];
     updateScoreboard();
-});
+}
 
 window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
@@ -58,7 +64,7 @@ function init(){
     ground.position.z = 0;
     scene.add(ground);
 
-    // Player = geçici kutu
+    // Player = kutu
     player = new THREE.Mesh(
         new THREE.BoxGeometry(1,1,1),
         new THREE.MeshPhongMaterial({color:0xffffff})
@@ -103,10 +109,10 @@ function gameOver(){
 function animate(){
     requestAnimationFrame(animate);
 
-    if(!gameStarted) return;
+    if(!gameStarted) return; // oyun başlamadıysa hiçbir şey yapma
 
-    // hız yavaş başla, sonra art
-    if(gameSpeed<maxSpeed) gameSpeed += 0.00005;
+    // hız yavaş başlar, sonra artar
+    if(gameSpeed<maxSpeed) gameSpeed += 0.00003;
 
     // WASD lane switch
     if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
@@ -114,7 +120,7 @@ function animate(){
 
     // Smooth lane movement
     player.position.x += (targetX - player.position.x)*0.2;
-    player.position.z -= gameSpeed*5; // auto-forward
+    player.position.z -= gameSpeed*5;
 
     spawnItem();
 
