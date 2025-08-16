@@ -24,7 +24,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // Nesneleri tutmak için diziler
   const obstacles = [];
   const milkCartons = [];
-  const groundTiles = [];
 
   // Rastgele nesne oluşturmak için zamanlayıcı
   let spawnTimer = 0;
@@ -33,7 +32,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // Yüklenecek 3D modelleri saklamak için değişkenler
   let milkCartonModel;
   let obstacleModels = [];
-  let groundModel;
 
   // Klavye Kontrolleri
   window.addEventListener('keydown', (event) => {
@@ -73,6 +71,14 @@ window.addEventListener("DOMContentLoaded", () => {
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
 
+      // Geri döndüğümüz eski düz yeşil zemin
+      const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(20, 1000),
+          new THREE.MeshStandardMaterial({ color: 0x228B22 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+
       // Modelleri yükle
       loadModels();
 
@@ -91,8 +97,7 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'hayBale', path: 'hay_bale.glb' },
         { name: 'tractor', path: 'tractor.glb' },
-        { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
-        { name: 'ground', path: 'dusty_foot_path_way_in_grass_garden.glb' }
+        { name: 'windmill', path: 'handpainted_windmill_tower.glb' }
     ];
 
     let loadedCount = 0;
@@ -113,17 +118,12 @@ window.addEventListener("DOMContentLoaded", () => {
                     }
                 } else if (model.name === 'milkCarton') {
                     milkCartonModel = gltf.scene;
-                } else if (model.name === 'ground') {
-                    groundModel = gltf.scene;
-                    groundModel.scale.set(10, 10, 10);
                 } else {
                     obstacleModels.push(gltf.scene);
                 }
 
                 loadedCount++;
                 if (loadedCount === modelsToLoad.length) {
-                    // Tüm modeller yüklendiğinde animate döngüsünü başlat
-                    createInitialGroundTiles();
                     animate();
                 }
             },
@@ -137,44 +137,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // ----------------- Zemin Oluşturma Fonksiyonu -----------------
-  function createGroundTile(zPos) {
-      if (!groundModel) return;
-      const tile = groundModel.clone();
-      tile.position.set(0, -0.2, zPos);
-      tile.rotation.x = -Math.PI / 2;
-      scene.add(tile);
-      groundTiles.push(tile);
-  }
-
-  function createInitialGroundTiles() {
-      // Başlangıçta birkaç zemin parçası oluştur
-      for (let i = 0; i < 5; i++) {
-          createGroundTile(-i * 10); // 10 birim aralıklarla yerleştir
-      }
-  }
-
-  // ----------------- Oyun Başlatma Mantığı -----------------
-  startButton.addEventListener("click", () => {
-      overlay.style.display = "none";
-      
-      const danceClip = animations.find(clip => clip.name === 'dance');
-      if (danceClip) {
-          const action = mixer.clipAction(danceClip);
-          action.setLoop(THREE.LoopOnce);
-          action.clampWhenFinished = true;
-          action.play();
-      }
-
-      setTimeout(() => {
-          startGame();
-      }, 4000);
-  });
-
-  restartButton.addEventListener("click", () => {
-      location.reload();
-  });
-
   // ----------------- Nesne Oluşturma Fonksiyonları -----------------
   function createObstacle() {
       if (obstacleModels.length === 0) return;
@@ -184,6 +146,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       obstacle.position.set(lanes[laneIndex], 0.75, -50);
 
+      // Modelin kendisine göre scale ve pozisyon ayarı
       if (randomModel.name === "hay_bale") {
           obstacle.scale.set(0.5, 0.5, 0.5);
       } else if (randomModel.name === "tractor") {
@@ -266,19 +229,6 @@ window.addEventListener("DOMContentLoaded", () => {
       
       if (!gameStarted || gameOver) {
           return;
-      }
-
-      // Zemin parçalarını hareket ettir ve tekrar oluştur
-      for(let i = groundTiles.length - 1; i >= 0; i--) {
-          const tile = groundTiles[i];
-          tile.position.z += mixer.timeScale * 0.1;
-          
-          if(tile.position.z > 5) {
-              scene.remove(tile);
-              groundTiles.splice(i, 1);
-              // Yeni bir parça ekle
-              createGroundTile(groundTiles[groundTiles.length - 1].position.z - 10);
-          }
       }
 
       // Engelleri hareket ettir ve kontrol et
