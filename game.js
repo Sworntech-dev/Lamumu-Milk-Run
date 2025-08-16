@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", () => {
       ground.rotation.x = -Math.PI/2;
       scene.add(ground);
 
-      // Karakter ekle
+      // Karakteri seçime göre oluştur
       const geometry = new THREE.BoxGeometry(1,1,1);
       const material = new THREE.MeshStandardMaterial({ color: selectedCharacter==="green"?0x00ff00:0x000000 });
       player = new THREE.Mesh(geometry, material);

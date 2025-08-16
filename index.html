@@ -4,7 +4,50 @@
   <meta charset="UTF-8" />
   <title>Cow Runner - Click Character</title>
   <style>
-    /* ... (style kodları aynı) ... */
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #87ceeb;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .charBox {
+      width: 80px;
+      height: 80px;
+      margin: 20px;
+      display: inline-block;
+      cursor: pointer;
+      border: 3px solid white;
+      border-radius: 8px;
+    }
+
+    #scoreBoard {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 22px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.5);
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #fff;
+      z-index: 5;
+    }
   </style>
 </head>
 <body>
