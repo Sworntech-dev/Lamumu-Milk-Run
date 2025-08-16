@@ -166,11 +166,11 @@ window.addEventListener("DOMContentLoaded", () => {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
       } else if (randomModel.name === "scarecrow") {
-          obstacle.scale.set(1, 1, 1); // 2 katı arttırıldı (0.5 -> 1.0)
-          obstacle.position.y = 0.5; // Zemine tam oturması için ayarlandı
+          obstacle.scale.set(3, 3, 3); // 3 katı arttırıldı
+          obstacle.position.y = 1.5; // Zemine tam oturması için ayarlandı
       } else if (randomModel.name === "hayBale") {
-          obstacle.scale.set(0.6, 0.6, 0.6); // 2 katı arttırıldı (0.3 -> 0.6)
-          obstacle.position.y = -0.2; // Zemine tam oturması için ayarlandı
+          obstacle.scale.set(1.5, 1.5, 1.5); // 5 katı arttırıldı
+          obstacle.position.y = -0.4; // Zemine tam oturması için ayarlandı
       }
       
       scene.add(obstacle);
