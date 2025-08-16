@@ -12,13 +12,13 @@ window.addEventListener("DOMContentLoaded", () => {
   let selectedCharacter = null;
 
   // ----------------- Karakter Seçimi -----------------
-  document.getElementById("charGreen").addEventListener("click", ()=>{
+  document.getElementById("charGreen").addEventListener("click", () => {
       selectedCharacter = "green";
       overlay.style.display = "none";
       startGame();
   });
 
-  document.getElementById("charBlack").addEventListener("click", ()=>{
+  document.getElementById("charBlack").addEventListener("click", () => {
       selectedCharacter = "black";
       overlay.style.display = "none";
       startGame();
@@ -26,47 +26,53 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ----------------- Init Scene -----------------
   function init() {
+      // Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87ceeb);
 
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      // Camera
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(0, 2, 5);
 
+      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
+      // Lights
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(5, 10, 7);
       scene.add(light);
       
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Ortam ışığı ekleyelim
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
 
+      // Ground
       const ground = new THREE.Mesh(
           new THREE.PlaneGeometry(20, 100),
           new THREE.MeshStandardMaterial({ color: 0x228B22 })
       );
-      ground.rotation.x = -Math.PI/2;
+      ground.rotation.x = -Math.PI / 2;
       scene.add(ground);
 
-      // Karakteri seçime göre oluştur
+      // Add Player based on selection
       if (selectedCharacter === "green") {
-          // Yeşil küp
+          // Green Cube
           const geometry = new THREE.BoxGeometry(1, 1, 1);
           const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
           player = new THREE.Mesh(geometry, material);
           player.position.set(0, 0.5, 0);
           scene.add(player);
       } else if (selectedCharacter === "black") {
-          // Model yükleme
+          // Load Model
           const loader = new THREE.GLTFLoader();
           loader.load(
               'cow_-_farm_animal_-_3december2022.glb',
               (gltf) => {
                   player = gltf.scene;
-                  player.position.set(0, 0, 0); // Modelin pozisyonunu ayarla
-                  player.scale.set(1, 1, 1); // İhtiyaç olursa boyutu ayarla
+                  // Adjust model properties
+                  player.position.set(0, 0, 0); 
+                  player.scale.set(1, 1, 1);
                   scene.add(player);
               },
               (xhr) => {
@@ -78,8 +84,8 @@ window.addEventListener("DOMContentLoaded", () => {
           );
       }
 
-      window.addEventListener("resize", ()=>{
-          camera.aspect = window.innerWidth/window.innerHeight;
+      window.addEventListener("resize", () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
       });
@@ -95,16 +101,18 @@ window.addEventListener("DOMContentLoaded", () => {
   // ----------------- Animate -----------------
   function animate() {
       requestAnimationFrame(animate);
-      if(!gameStarted || !player) {
-          // Model yüklenmediyse bekle
-          renderer.render(scene, camera);
+      
+      // Render the scene even if the model is not loaded yet
+      renderer.render(scene, camera);
+      
+      if (!gameStarted || !player) {
+          // Wait for the player object to be created
           return;
       }
 
+      // Your game logic goes here
       score++;
       scoreBoard.innerText = `Score: ${score}`;
-
-      renderer.render(scene, camera);
   }
 
 });
