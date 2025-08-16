@@ -123,10 +123,12 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
             },
             (xhr) => {
-                console.log(`Model yükleniyor: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
+                // Yüklenme ilerlemesini konsola yazdırıyoruz.
+                console.log(`Model yükleniyor: ${model.name} ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
             },
             (error) => {
-                console.error(`Bir hata oluştu: ${model.path}`, error);
+                // Hata mesajını daha açık hale getirdik.
+                console.error(`Yükleme hatası: ${model.path} dosyası bulunamadı veya yüklenemedi.`, error);
             }
         );
     });
