@@ -73,6 +73,18 @@ function init() {
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
+  // Şerit çizgilerini ekleme
+  const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const lineGeometry = new THREE.BoxGeometry(0.1, 0.1, 1000);
+
+  const line1 = new THREE.Mesh(lineGeometry, lineMaterial);
+  line1.position.set(-1.5, 0.05, -500);
+  scene.add(line1);
+
+  const line2 = new THREE.Mesh(lineGeometry, lineMaterial);
+  line2.position.set(1.5, 0.05, -500);
+  scene.add(line2);
+
   loadModels();
 
   window.addEventListener("resize", () => {
@@ -84,7 +96,6 @@ function init() {
 
 function loadModels() {
   const loader = new THREE.GLTFLoader();
-  // Yeni saman balyası modelini ekledik
   const modelsToLoad = [
     { name: 'cow', path: 'dancing_cow.glb' },
     { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
@@ -198,7 +209,7 @@ function startGame() {
     const action = mixer.clipAction(walkProudClip);
     action.setLoop(THREE.LoopRepeat);
     action.play();
-    mixer.timeScale = 2; // Başlangıç hızını 2x'e ayarlar
+    mixer.timeScale = 2;
   }
   score = 0;
   gameStarted = true;
@@ -221,7 +232,7 @@ function animate() {
   const delta = clock.getDelta();
   if (mixer) {
     if (gameStarted) {
-      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); // Maksimum hızı 4x'e ayarlar
+      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
     }
     mixer.update(delta);
   }
