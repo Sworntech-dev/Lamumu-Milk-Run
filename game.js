@@ -91,7 +91,7 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
         { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
-        { name: 'hayBale', path: 'hay_bale_free.glb' }
+        { name: 'hayBale', path: 'hay_bales.glb' } // Yeni saman modeli
     ];
 
     let loadedCount = 0;
@@ -166,17 +166,17 @@ window.addEventListener("DOMContentLoaded", () => {
           const hayBaleGroup = new THREE.Group();
 
           const hayBale1 = randomModel.clone();
-          hayBale1.scale.set(1.5, 1.5, 1.5); 
+          hayBale1.scale.set(1, 1, 1); 
           hayBale1.position.set(-1.5, 0, 0); 
           hayBaleGroup.add(hayBale1);
 
           const hayBale2 = randomModel.clone();
-          hayBale2.scale.set(1.5, 1.5, 1.5); 
+          hayBale2.scale.set(1, 1, 1); 
           hayBale2.position.set(1.5, 0, 0); 
           hayBaleGroup.add(hayBale2);
 
           const hayBale3 = randomModel.clone();
-          hayBale3.scale.set(1.5, 1.5, 1.5); 
+          hayBale3.scale.set(1, 1, 1); 
           hayBale3.position.set(0, 1.5, 0);
           hayBaleGroup.add(hayBale3);
 
@@ -233,7 +233,7 @@ window.addEventListener("DOMContentLoaded", () => {
           const action = mixer.clipAction(walkProudClip);
           action.setLoop(THREE.LoopRepeat);
           action.play();
-          mixer.timeScale = 2; // Başlangıç hızı 2x olarak ayarlandı
+          mixer.timeScale = 1; // Başlangıç hızı 1x
       }
       
       score = 0;
@@ -261,7 +261,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const delta = clock.getDelta();
       if (mixer) {
           if (gameStarted) {
-            mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
+            mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05); // Oyun hızını 2x'e kadar artırma
           }
           mixer.update(delta);
       }
