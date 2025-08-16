@@ -69,7 +69,7 @@ window.addEventListener("DOMContentLoaded", () => {
           // Load Model
           const loader = new THREE.GLTFLoader();
           loader.load(
-              'cow_run.glb', 
+              'dancing_cow.glb', // Yeni modelinizin adı
               (gltf) => {
                   player = gltf.scene;
                   
@@ -83,8 +83,18 @@ window.addEventListener("DOMContentLoaded", () => {
                   animations = gltf.animations;
                   if (animations && animations.length) {
                       mixer = new THREE.AnimationMixer(player);
-                      const action = mixer.clipAction(animations[0]); 
-                      action.play();
+                      
+                      // walk_proud animasyonunu bul ve oynat
+                      const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
+
+                      if (walkProudClip) {
+                          const action = mixer.clipAction(walkProudClip);
+                          action.play();
+                      } else {
+                          console.log('walk_proud animasyonu bulunamadı. İlk animasyon oynatılıyor.');
+                          const action = mixer.clipAction(animations[0]);
+                          action.play();
+                      }
                   }
               },
               (xhr) => {
@@ -125,7 +135,6 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
       }
       
-      // *** ROOT MOTİONU İPTAL ETME ÇÖZÜMÜ ***
       // Animasyonun pozisyon değişimini her karede sıfırlıyoruz
       player.position.set(0, 0, 0);
       player.rotation.y = Math.PI;
