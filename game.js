@@ -130,6 +130,27 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
   
+  // ----------------- Oyun Başlatma Mantığı -----------------
+  startButton.addEventListener("click", () => {
+      overlay.style.display = "none";
+      
+      const danceClip = animations.find(clip => clip.name === 'dance');
+      if (danceClip) {
+          const action = mixer.clipAction(danceClip);
+          action.setLoop(THREE.LoopOnce);
+          action.clampWhenFinished = true;
+          action.play();
+      }
+
+      setTimeout(() => {
+          startGame();
+      }, 4000);
+  });
+
+  restartButton.addEventListener("click", () => {
+      location.reload();
+  });
+
   // ----------------- Nesne Oluşturma Fonksiyonları -----------------
   function createObstacle() {
       if (obstacleModels.length === 0) return;
