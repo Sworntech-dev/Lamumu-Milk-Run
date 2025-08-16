@@ -77,8 +77,8 @@ function init(){
 function spawnItem(){
     const zPos = -25;
 
-    // Engel spawn
-    if(Math.random()<0.02){
+    // Engel spawn %20 olasılık
+    if(Math.random()<0.2){
         const freeLanes = lanes.slice();
         const laneIndex = Math.floor(Math.random() * freeLanes.length);
         const obsLane = freeLanes.splice(laneIndex,1)[0];
@@ -88,8 +88,8 @@ function spawnItem(){
         obstacles.push(box);
     }
 
-    // Süt spawn
-    if(Math.random()<0.02){
+    // Süt spawn %20 olasılık
+    if(Math.random()<0.2){
         const freeLanes = lanes.slice();
         const laneIndex = Math.floor(Math.random() * freeLanes.length);
         const milkLane = freeLanes.splice(laneIndex,1)[0];
@@ -121,11 +121,14 @@ function animate(){
 
     if(!gameStarted) return;
 
+    // Hız kademeli artış
     if(gameSpeed < maxSpeed) gameSpeed += gameSpeedIncrement;
 
+    // WASD lane switch
     if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
     if(keys['d'] && currentLane<2){ currentLane++; keys['d']=false; targetX=lanes[currentLane]; }
 
+    // Smooth lane movement
     player.position.x += (targetX - player.position.x)*0.2;
 
     // Spawn cooldown kontrolü
