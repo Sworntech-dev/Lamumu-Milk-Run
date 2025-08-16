@@ -33,7 +33,8 @@ let obstacleModels = [];
 
 // Çizgiler için global değişkenler
 let laneLines = [];
-const lineLength = 50; // Çizgilerin uzunluğu
+const lineSegmentCount = 10; // Yolun sürekli görünmesi için çizgi sayısı
+const lineLength = 20; // Her bir çizgi parçasının uzunluğu
 
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
@@ -93,15 +94,17 @@ function createLaneLines() {
   const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
   const lineGeometry = new THREE.BoxGeometry(0.1, 0.1, lineLength);
 
-  const line1 = new THREE.Mesh(lineGeometry, lineMaterial);
-  line1.position.set(1.5, 0.05, 0); // Başlangıç pozisyonu
-  scene.add(line1);
-  laneLines.push(line1);
+  for (let i = 0; i < lineSegmentCount; i++) {
+    const line1 = new THREE.Mesh(lineGeometry, lineMaterial);
+    line1.position.set(-1.5, 0.05, -50 - (i * lineLength));
+    scene.add(line1);
+    laneLines.push(line1);
 
-  const line2 = new THREE.Mesh(lineGeometry, lineMaterial);
-  line2.position.set(-1.5, 0.05, 0); // Başlangıç pozisyonu
-  scene.add(line2);
-  laneLines.push(line2);
+    const line2 = new THREE.Mesh(lineGeometry, lineMaterial);
+    line2.position.set(1.5, 0.05, -50 - (i * lineLength));
+    scene.add(line2);
+    laneLines.push(line2);
+  }
 }
 
 function loadModels() {
@@ -250,13 +253,12 @@ function animate() {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
 
-    // Çizgilerin hareketini oyuncunun pozisyonuna göre güncelleme
+    // Çizgilerin hareketini güncelleme
     const speed = mixer.timeScale * 0.1;
     laneLines.forEach(line => {
       line.position.z += speed;
-      // Çizgiler kamera görüş alanından çıktığında onları yeniden başa sar
-      if (line.position.z > 5) {
-        line.position.z = -50;
+      if (line.position.z > player.position.z + 5) {
+        line.position.z -= lineLength * lineSegmentCount;
       }
     });
   }
@@ -264,7 +266,7 @@ function animate() {
   if (!gameStarted || gameOver) {
     return;
   }
-  
+
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
     obstacle.position.z += mixer.timeScale * 0.1;
