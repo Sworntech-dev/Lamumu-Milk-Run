@@ -4,7 +4,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("overlay");
   const gameOverOverlay = document.getElementById("gameOverOverlay");
   const scoreBoard = document.getElementById("scoreBoard");
-  const startText = document.getElementById("startText");
+  const startButton = document.getElementById("startButton");
   const restartButton = document.getElementById("restartButton");
   const finalScoreText = document.getElementById("finalScoreText");
 
@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Rastgele nesne oluşturmak için zamanlayıcı
   let spawnTimer = 0;
-  const spawnInterval = 1; // Saniye cinsinden
+  const spawnInterval = 1;
 
   // Klavye Kontrolleri
   window.addEventListener('keydown', (event) => {
@@ -92,7 +92,6 @@ window.addEventListener("DOMContentLoaded", () => {
                   mixer = new THREE.AnimationMixer(player);
               }
               
-              // Modeli yükledikten sonra animate döngüsünü başlat
               animate();
           },
           (xhr) => {
@@ -111,7 +110,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------- Oyun Başlatma Mantığı -----------------
-  overlay.addEventListener("click", () => {
+  startButton.addEventListener("click", () => {
       overlay.style.display = "none";
       
       const danceClip = animations.find(clip => clip.name === 'dance');
@@ -128,7 +127,6 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   restartButton.addEventListener("click", () => {
-      // Oyunu yeniden başlat
       location.reload();
   });
 
@@ -179,7 +177,6 @@ window.addEventListener("DOMContentLoaded", () => {
       gameOver = false;
       scoreBoard.innerText = `Score: ${score}`;
 
-      // Nesneleri düzenli olarak oluştur
       spawnObjects();
       setInterval(spawnObjects, 1000);
   }
@@ -216,17 +213,15 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
-      // Engelleri hareket ettir ve kontrol et
       for (let i = obstacles.length - 1; i >= 0; i--) {
           const obstacle = obstacles[i];
-          obstacle.position.z += mixer.timeScale * 0.1; // Hızla orantılı hareket
+          obstacle.position.z += mixer.timeScale * 0.1;
           
           if (obstacle.position.z > 5) {
               scene.remove(obstacle);
               obstacles.splice(i, 1);
           }
 
-          // Çarpışma kontrolü (Basit bounding box)
           if (
               Math.abs(player.position.x - obstacle.position.x) < 1 &&
               Math.abs(player.position.z - obstacle.position.z) < 1
@@ -236,7 +231,6 @@ window.addEventListener("DOMContentLoaded", () => {
           }
       }
 
-      // Süt kutularını hareket ettir ve kontrol et
       for (let i = milkCartons.length - 1; i >= 0; i--) {
           const milkCarton = milkCartons[i];
           milkCarton.position.z += mixer.timeScale * 0.1;
@@ -246,7 +240,6 @@ window.addEventListener("DOMContentLoaded", () => {
               milkCartons.splice(i, 1);
           }
 
-          // Süt kutusu toplama kontrolü
           if (
               Math.abs(player.position.x - milkCarton.position.x) < 1 &&
               Math.abs(player.position.z - milkCarton.position.z) < 1
@@ -260,6 +253,5 @@ window.addEventListener("DOMContentLoaded", () => {
       }
   }
 
-  // Başlangıçta sadece sahnemizi başlat
   init();
 });
