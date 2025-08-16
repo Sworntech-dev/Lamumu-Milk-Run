@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Çılgın Çiftlik Yarışı</title>
+    <title>Crazy Farm Race</title>
     <style>
         body {
             margin: 0;
@@ -73,16 +73,16 @@
 <body>
 
     <div id="overlay">
-        <h1>Çılgın Çiftlik Yarışı</h1>
-        <p>Oyunu başlatmak için "Başla" düğmesine bas.</p>
-        <p>A ve D tuşlarıyla şerit değiştir.</p>
-        <button id="startButton" class="button">Başla</button>
+        <h1>Crazy Farm Race</h1>
+        <p>Press "Start" to begin the game.</p>
+        <p>Use A and D keys to change lanes.</p>
+        <button id="startButton" class="button">Start</button>
     </div>
 
     <div id="gameOverOverlay" style="display: none;">
-        <h1>Oyun Bitti!</h1>
+        <h1>Game Over!</h1>
         <p id="finalScoreText" style="font-size: 2em;"></p>
-        <button id="restartButton" class="button">Tekrar Oyna</button>
+        <button id="restartButton" class="button">Play Again</button>
     </div>
 
     <div id="scoreBoard">Score: 0</div>
@@ -97,13 +97,7 @@
         }
     </script>
     
-    <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-        // game.js dosyasını içe aktarın
-        import './game.js';
-    </script>
+    <script type="module" src="./game.js"></script>
 
 </body>
 </html>
