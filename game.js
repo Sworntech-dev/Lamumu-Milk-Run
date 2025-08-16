@@ -161,7 +161,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const laneIndex = Math.floor(Math.random() * lanes.length);
       const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
 
-      // Engeli oluştur
+      // Tek bir engel oluştur
       const obstacle = randomModel.clone();
       obstacle.position.copy(obstaclePosition);
       obstacle.rotation.y = Math.PI * 1.5;
