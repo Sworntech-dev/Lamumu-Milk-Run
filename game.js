@@ -20,8 +20,11 @@ const maxSpeed = 0.06;
 const gameSpeedIncrement = 0.00001; 
 let spawnCooldown = 0; 
 
+// Başlangıçta start butonu pasif
+startBtn.disabled = true;
+
 startBtn.addEventListener('click', () => {
-    startGame();
+    if(player) startGame();
 });
 
 function startGame(){
@@ -31,7 +34,7 @@ function startGame(){
     gameSpeed = 0.02; 
     obstacles.forEach(o=>scene.remove(o)); obstacles=[];
     milks.forEach(m=>scene.remove(m)); milks=[];
-    if(player) player.position.set(lanes[1],0,0);
+    player.position.set(lanes[1],0.25,0);
     currentLane = 1;
     targetX = lanes[currentLane];
     spawnCooldown = 0;
@@ -75,8 +78,11 @@ function init(){
     loader.load('cow/scene.gltf', function(gltf){
         player = gltf.scene;
         player.scale.set(0.5,0.5,0.5);
-        player.position.set(lanes[currentLane], 0.25, 0); // y yüksekliği ayarlandı
+        player.position.set(lanes[currentLane], 0.25, 0);
         scene.add(player);
+
+        // Model yüklendi → start butonunu aktif yap
+        startBtn.disabled = false;
     }, undefined, function(error){
         console.error('GLTF yükleme hatası:', error);
     });
@@ -110,10 +116,10 @@ function spawnItem(){
 
 function updateScoreboard(){
     let wlChance = 0;
-    if(score>=50) wlChance=100;
-    else if(score>=25) wlChance=75;
-    else if(score>=15) wlChance=50;
-    else if(score>=5) wlChance=25;
+    if(score>=500) wlChance=100;
+    else if(score>=300) wlChance=75;
+    else if(score>=200) wlChance=50;
+    else if(score>=100) wlChance=25;
     scoreboard.innerText = `Score: ${score} | WL Chance: ${wlChance}%`;
 }
 
