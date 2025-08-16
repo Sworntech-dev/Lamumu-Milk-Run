@@ -17,18 +17,22 @@ window.addEventListener("DOMContentLoaded", () => {
   let gameOver = false;
   let score = 0;
   
+  // Şeritler ve pozisyon
   const lanes = [-3, 0, 3];
   let currentLane = 1;
   
+  // Nesneleri tutmak için diziler
   const obstacles = [];
   const milkCartons = [];
 
   let spawnTimer = 0;
   const spawnInterval = 1;
 
+  // Yüklenecek 3D modelleri saklamak için değişkenler
   let milkCartonModel;
   let obstacleModels = [];
 
+  // Klavye Kontrolleri
   window.addEventListener('keydown', (event) => {
     if (!gameStarted || gameOver) return;
 
@@ -86,7 +90,6 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'cow', path: 'dancing_cow.glb' },
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'hayBale', path: 'hay_bale.glb' },
-        { name: 'tractor', path: 'tractor.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' }
     ];
 
@@ -127,28 +130,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // ----------------- Oyun Başlatma Mantığı -----------------
-  startButton.addEventListener("click", () => {
-      console.log("Start button clicked!"); // Hata ayıklama mesajı
-      overlay.style.display = "none";
-      
-      const danceClip = animations.find(clip => clip.name === 'dance');
-      if (danceClip) {
-          const action = mixer.clipAction(danceClip);
-          action.setLoop(THREE.LoopOnce);
-          action.clampWhenFinished = true;
-          action.play();
-      }
-
-      setTimeout(() => {
-          startGame();
-      }, 4000);
-  });
-
-  restartButton.addEventListener("click", () => {
-      location.reload();
-  });
-
   // ----------------- Nesne Oluşturma Fonksiyonları -----------------
   function createObstacle() {
       if (obstacleModels.length === 0) return;
@@ -156,13 +137,12 @@ window.addEventListener("DOMContentLoaded", () => {
       const obstacle = randomModel.clone();
       
       const laneIndex = Math.floor(Math.random() * lanes.length);
-      obstacle.position.set(lanes[laneIndex], 0.75, -50);
+      obstacle.position.set(lanes[laneIndex], 0, -50);
 
       // Modelin kendisine göre scale ve pozisyon ayarı
       if (randomModel.name === "hay_bale") {
           obstacle.scale.set(0.5, 0.5, 0.5);
-      } else if (randomModel.name === "tractor") {
-          obstacle.scale.set(0.7, 0.7, 0.7);
+          obstacle.position.y = -0.25; // Saman balyasını zemine sabitlemek için
       } else if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
