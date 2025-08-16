@@ -1,103 +1,115 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer;
-let player, mixer;
 let clock = new THREE.Clock();
-let gameStarted = false;
-let selectedCharacter = null; // seçilen karakter
+let character = null;
+let mixer = null;
 let obstacles = [];
+let milks = [];
+let speed = 0.05;
 let score = 0;
-let scoreBoard = document.getElementById("scoreBoard");
-let gameOverScreen = document.getElementById("gameOverScreen");
-let finalScore = document.getElementById("finalScore");
+let isGameRunning = false;
+let selectedCharacter = null;
 
-const loader = new GLTFLoader();
+// HTML elementleri
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+const scoreEl = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+const charCubeBtn = document.getElementById("chooseCube");
+const charCowBtn = document.getElementById("chooseCow");
 
-// --- Karakter seçme fonksiyonu (HTML'den çağrılır) ---
-window.selectCharacter = function (character) {
-  selectedCharacter = character;
-  document.getElementById("startButton").disabled = false;
-};
+// Karakter seçimi
+charCubeBtn.addEventListener("click", () => {
+    selectedCharacter = "cube";
+    startBtn.disabled = false; // karakter seçildiğinde start aktif
+});
+charCowBtn.addEventListener("click", () => {
+    selectedCharacter = "cow";
+    startBtn.disabled = false;
+});
 
-// --- Oyunu başlat ---
-window.startGame = function () {
-  if (!selectedCharacter) return; // karakter seçilmemişse başlamasın
+// Start game
+startBtn.addEventListener("click", () => {
+    if (!selectedCharacter) return;
+    document.getElementById("menu").style.display = "none";
+    init();
+    isGameRunning = true;
+    animate();
+});
 
-  document.getElementById("overlay").classList.add("hidden");
-
-  init();
-  animate();
-  gameStarted = true;
-};
-
-// --- Oyunu tekrar başlat ---
-window.restartGame = function () {
-  location.reload();
-};
+// Restart
+restartBtn.addEventListener("click", () => {
+    location.reload(); // sayfayı yenile
+});
 
 function init() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87ceeb);
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
 
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 5, 10);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 5);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(5, 10, 7);
-  scene.add(light);
+    // Işık
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 10, 7.5);
+    scene.add(light);
 
-  // Zemin
-  const groundGeometry = new THREE.PlaneGeometry(200, 200);
-  const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
-  const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-  ground.rotation.x = -Math.PI / 2;
-  scene.add(ground);
+    // Zemin
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
 
-  // Karakter ekleme
-  if (selectedCharacter === "box") {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-    player = new THREE.Mesh(geometry, material);
-    player.position.set(0, 0.5, 0);
-    scene.add(player);
-  } else if (selectedCharacter === "cow") {
-    loader.load("cow_-_farm_animal_-_3december2022.glb", (gltf) => {
-      player = gltf.scene;
-      player.scale.set(2, 2, 2);
-      player.position.set(0, 0, 0);
-      scene.add(player);
+    // Karakter yükle
+    if (selectedCharacter === "cube") {
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        character = new THREE.Mesh(geometry, material);
+        character.position.set(0, 0.5, 0);
+        scene.add(character);
+    } else if (selectedCharacter === "cow") {
+        const loader = new GLTFLoader();
+        loader.load("models/cow_-_farm_animal_-_3december2022.glb", (gltf) => {
+            character = gltf.scene;
+            character.scale.set(0.5, 0.5, 0.5);
+            character.position.set(0, 0, 0);
+            scene.add(character);
 
-      mixer = new THREE.AnimationMixer(player);
-      if (gltf.animations.length > 0) {
-        mixer.clipAction(gltf.animations[0]).play();
-      }
-    });
-  }
+            mixer = new THREE.AnimationMixer(character);
+            if (gltf.animations.length > 0) {
+                mixer.clipAction(gltf.animations[0]).play();
+            }
+        });
+    }
 
-  window.addEventListener("resize", onWindowResize);
+    window.addEventListener("resize", onWindowResize);
 }
 
+// Resize
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
-  requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 
-  if (mixer) mixer.update(clock.getDelta());
+    if (!isGameRunning) return;
 
-  if (gameStarted && player) {
-    // Skoru artır
-    score += 0.01;
-    scoreBoard.textContent = "Score: " + Math.floor(score);
-  }
+    let delta = clock.getDelta();
+    if (mixer) mixer.update(delta);
 
-  renderer.render(scene, camera);
+    // Basit skor artışı
+    score += 1;
+    scoreEl.innerText = `Score: ${score}`;
+
+    renderer.render(scene, camera);
 }
