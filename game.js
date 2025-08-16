@@ -175,6 +175,9 @@ window.addEventListener("DOMContentLoaded", () => {
       
       scene.add(obstacle);
       obstacles.push(obstacle);
+
+      // Konsola boyut bilgisini yazdırmak için hata ayıklama satırı
+      console.log(`Oluşturulan Engel: ${randomModel.name}, Boyut:`, obstacle.scale);
   }
 
   function createMilkCarton() {
