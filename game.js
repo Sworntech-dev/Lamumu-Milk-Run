@@ -2,8 +2,11 @@
 window.addEventListener("DOMContentLoaded", () => {
 
   const overlay = document.getElementById("overlay");
+  const gameOverOverlay = document.getElementById("gameOverOverlay");
   const scoreBoard = document.getElementById("scoreBoard");
   const startText = document.getElementById("startText");
+  const restartButton = document.getElementById("restartButton");
+  const finalScoreText = document.getElementById("finalScoreText");
 
   let scene, camera, renderer;
   let player = null;
@@ -11,7 +14,35 @@ window.addEventListener("DOMContentLoaded", () => {
   let animations;
   let clock = new THREE.Clock();
   let gameStarted = false;
+  let gameOver = false;
   let score = 0;
+  
+  // Şeritler ve pozisyon
+  const lanes = [-3, 0, 3];
+  let currentLane = 1;
+  
+  // Nesneleri tutmak için diziler
+  const obstacles = [];
+  const milkCartons = [];
+
+  // Rastgele nesne oluşturmak için zamanlayıcı
+  let spawnTimer = 0;
+  const spawnInterval = 1; // Saniye cinsinden
+
+  // Klavye Kontrolleri
+  window.addEventListener('keydown', (event) => {
+    if (!gameStarted || gameOver) return;
+
+    if (event.key === 'a' || event.key === 'A') {
+      if (currentLane > 0) {
+        currentLane--;
+      }
+    } else if (event.key === 'd' || event.key === 'D') {
+      if (currentLane < lanes.length - 1) {
+        currentLane++;
+      }
+    }
+  });
 
   // ----------------- Init Scene -----------------
   function init() {
@@ -36,9 +67,9 @@ window.addEventListener("DOMContentLoaded", () => {
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
 
-      // Ground
+      // Ground (Yol)
       const ground = new THREE.Mesh(
-          new THREE.PlaneGeometry(20, 100),
+          new THREE.PlaneGeometry(20, 1000),
           new THREE.MeshStandardMaterial({ color: 0x228B22 })
       );
       ground.rotation.x = -Math.PI / 2;
@@ -51,7 +82,7 @@ window.addEventListener("DOMContentLoaded", () => {
           (gltf) => {
               player = gltf.scene;
               
-              player.position.set(0, 0, 0); 
+              player.position.set(lanes[currentLane], 0, 0); 
               player.rotation.y = Math.PI;
               player.scale.set(1, 1, 1);
               scene.add(player);
@@ -62,7 +93,6 @@ window.addEventListener("DOMContentLoaded", () => {
               }
               
               // Modeli yükledikten sonra animate döngüsünü başlat
-              // Bu sayede oyun ekranı yüklenir yüklenmez animasyon oynatabiliriz
               animate();
           },
           (xhr) => {
@@ -80,47 +110,87 @@ window.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Başlangıçta sadece sahnemizi başlat
-  init();
-
   // ----------------- Oyun Başlatma Mantığı -----------------
   overlay.addEventListener("click", () => {
-      // Overlay'i gizle
       overlay.style.display = "none";
       
-      // Dance animasyonunu bul ve oynat
       const danceClip = animations.find(clip => clip.name === 'dance');
       if (danceClip) {
           const action = mixer.clipAction(danceClip);
-          action.setLoop(THREE.LoopOnce); // Animasyon sadece bir kez oynatılacak
-          action.clampWhenFinished = true; // Bittiğinde son karede dur
+          action.setLoop(THREE.LoopOnce);
+          action.clampWhenFinished = true;
           action.play();
-      } else {
-          console.error('dance animasyonu bulunamadı.');
       }
 
-      // 4 saniye sonra oyunu başlat
       setTimeout(() => {
           startGame();
       }, 4000);
   });
 
+  restartButton.addEventListener("click", () => {
+      // Oyunu yeniden başlat
+      location.reload();
+  });
+
+  // ----------------- Nesne Oluşturma Fonksiyonları -----------------
+  function createObstacle() {
+      const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+      const material = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+      const obstacle = new THREE.Mesh(geometry, material);
+      
+      const laneIndex = Math.floor(Math.random() * lanes.length);
+      obstacle.position.set(lanes[laneIndex], 0.75, -50);
+      scene.add(obstacle);
+      obstacles.push(obstacle);
+  }
+
+  function createMilkCarton() {
+      const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
+      const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const milkCarton = new THREE.Mesh(geometry, material);
+
+      const laneIndex = Math.floor(Math.random() * lanes.length);
+      milkCarton.position.set(lanes[laneIndex], 0.5, -50);
+      scene.add(milkCarton);
+      milkCartons.push(milkCarton);
+  }
+
+  function spawnObjects() {
+      if (Math.random() > 0.5) {
+          createObstacle();
+      } else {
+          createMilkCarton();
+      }
+  }
+
   // ----------------- Oyun Başlatma Fonksiyonu -----------------
   function startGame() {
-      // Koşma animasyonuna geçiş yap
       const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
       if (walkProudClip) {
-          mixer.stopAllAction(); // Önceki animasyonları durdur
+          mixer.stopAllAction();
           const action = mixer.clipAction(walkProudClip);
-          action.setLoop(THREE.LoopRepeat); // Sonsuz döngüde tekrar et
+          action.setLoop(THREE.LoopRepeat);
           action.play();
-          // Animasyon hızını başlangıçta 2'ye ayarla
           mixer.timeScale = 2;
       }
-
-      // Skoru sıfırla ve oyunu başlat
+      
       score = 0;
       gameStarted = true;
+      gameOver = false;
+      scoreBoard.innerText = `Score: ${score}`;
+
+      // Nesneleri düzenli olarak oluştur
+      spawnObjects();
+      setInterval(spawnObjects, 1000);
+  }
+
+  // ----------------- Game Over Fonksiyonu -----------------
+  function endGame() {
+      gameOver = true;
+      gameStarted = false;
+      mixer.stopAllAction();
+      finalScoreText.innerText = `Final Score: ${score}`;
+      gameOverOverlay.style.display = "flex";
   }
 
   // ----------------- Animate -----------------
@@ -130,24 +200,66 @@ window.addEventListener("DOMContentLoaded", () => {
       const delta = clock.getDelta();
       if (mixer) {
           if (gameStarted) {
-            // Animasyon hızını yavaştan başlatmak yerine 2'den başlat ve 4'e kadar artır
             mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); 
           }
           mixer.update(delta);
       }
       
-      renderer.render(scene, camera);
-      
-      if (!gameStarted || !player) {
-          return;
+      if (player && !gameOver) {
+          const targetX = lanes[currentLane];
+          player.position.x += (targetX - player.position.x) * 0.1;
       }
       
-      // Animasyonun pozisyon değişimini her karede sıfırlıyoruz
-      player.position.set(0, 0, 0);
-      player.rotation.y = Math.PI;
+      renderer.render(scene, camera);
+      
+      if (!gameStarted || gameOver) {
+          return;
+      }
 
-      // Your game logic goes here
-      score++;
-      scoreBoard.innerText = `Score: ${score}`;
+      // Engelleri hareket ettir ve kontrol et
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+          const obstacle = obstacles[i];
+          obstacle.position.z += mixer.timeScale * 0.1; // Hızla orantılı hareket
+          
+          if (obstacle.position.z > 5) {
+              scene.remove(obstacle);
+              obstacles.splice(i, 1);
+          }
+
+          // Çarpışma kontrolü (Basit bounding box)
+          if (
+              Math.abs(player.position.x - obstacle.position.x) < 1 &&
+              Math.abs(player.position.z - obstacle.position.z) < 1
+          ) {
+              console.log("Game Over! Engelle çarpıştı.");
+              endGame();
+          }
+      }
+
+      // Süt kutularını hareket ettir ve kontrol et
+      for (let i = milkCartons.length - 1; i >= 0; i--) {
+          const milkCarton = milkCartons[i];
+          milkCarton.position.z += mixer.timeScale * 0.1;
+
+          if (milkCarton.position.z > 5) {
+              scene.remove(milkCarton);
+              milkCartons.splice(i, 1);
+          }
+
+          // Süt kutusu toplama kontrolü
+          if (
+              Math.abs(player.position.x - milkCarton.position.x) < 1 &&
+              Math.abs(player.position.z - milkCarton.position.z) < 1
+          ) {
+              score += 10;
+              scoreBoard.innerText = `Score: ${score}`;
+              scene.remove(milkCarton);
+              milkCartons.splice(i, 1);
+              console.log("Süt toplandı! Skor: " + score);
+          }
+      }
   }
+
+  // Başlangıçta sadece sahnemizi başlat
+  init();
 });
