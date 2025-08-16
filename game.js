@@ -99,6 +99,10 @@ window.addEventListener("DOMContentLoaded", () => {
         loader.load(
             model.path,
             (gltf) => {
+                // Modelin adını alıyoruz
+                const modelName = model.name;
+                gltf.scene.name = modelName;
+
                 if (model.name === 'cow') {
                     player = gltf.scene;
                     player.position.set(lanes[currentLane], 0, 0); 
@@ -169,8 +173,8 @@ window.addEventListener("DOMContentLoaded", () => {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
       } else if (randomModel.name === "scarecrow") {
-          obstacle.scale.set(3.5, 3.5, 3.5); 
-          obstacle.position.y = 1.5; 
+          obstacle.scale.set(1, 1, 1); // Burası 1,1,1 olarak değiştirildi
+          obstacle.position.y = 0; // Yükseklik de ayarlandı
       }
       
       scene.add(obstacle);
