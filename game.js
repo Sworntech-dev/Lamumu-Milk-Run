@@ -3,28 +3,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const overlay = document.getElementById("overlay");
   const scoreBoard = document.getElementById("scoreBoard");
+  const startText = document.getElementById("startText");
 
   let scene, camera, renderer;
   let player = null;
-  let mixer; // Animasyonları yönetmek için
-  let animations; // Modelden gelen tüm animasyon kliplerini saklamak için
-  let clock = new THREE.Clock(); // Animasyonun delta zamanını hesaplamak için
+  let mixer;
+  let animations;
+  let clock = new THREE.Clock();
   let gameStarted = false;
   let score = 0;
-  let selectedCharacter = null;
-
-  // ----------------- Karakter Seçimi -----------------
-  document.getElementById("charGreen").addEventListener("click", () => {
-      selectedCharacter = "green";
-      overlay.style.display = "none";
-      startGame();
-  });
-
-  document.getElementById("charBlack").addEventListener("click", () => {
-      selectedCharacter = "black";
-      overlay.style.display = "none";
-      startGame();
-  });
 
   // ----------------- Init Scene -----------------
   function init() {
@@ -34,7 +21,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
       // Camera
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      // Kamera pozisyonunu daha yukarı ve geriye ayarla (y ve z değerlerini artır)
       camera.position.set(0, 3, 7); 
 
       // Renderer
@@ -58,55 +44,34 @@ window.addEventListener("DOMContentLoaded", () => {
       ground.rotation.x = -Math.PI / 2;
       scene.add(ground);
 
-      // Add Player based on selection
-      if (selectedCharacter === "green") {
-          // Green Cube
-          const geometry = new THREE.BoxGeometry(1, 1, 1);
-          const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-          player = new THREE.Mesh(geometry, material);
-          player.position.set(0, 0.5, 0);
-          scene.add(player);
-      } else if (selectedCharacter === "black") {
-          // Load Model
-          const loader = new THREE.GLTFLoader();
-          loader.load(
-              'dancing_cow.glb', 
-              (gltf) => {
-                  player = gltf.scene;
-                  
-                  // İneği doğru pozisyona ve rotasyona getiriyoruz
-                  player.position.set(0, 0, 0); 
-                  player.rotation.y = Math.PI; // İneği kameraya doğru çevirir
-                  player.scale.set(1, 1, 1);
-                  scene.add(player);
+      // Cow Modelini Yükle
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+          'dancing_cow.glb', 
+          (gltf) => {
+              player = gltf.scene;
+              
+              player.position.set(0, 0, 0); 
+              player.rotation.y = Math.PI;
+              player.scale.set(1, 1, 1);
+              scene.add(player);
 
-                  // Animasyonları başlat
-                  animations = gltf.animations;
-                  if (animations && animations.length) {
-                      mixer = new THREE.AnimationMixer(player);
-                      
-                      const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
-
-                      if (walkProudClip) {
-                          const action = mixer.clipAction(walkProudClip);
-                          action.play();
-                          // Animasyonun başlangıç hızını 2 olarak ayarla
-                          mixer.timeScale = 2;
-                      } else {
-                          console.log('walk_proud animasyonu bulunamadı. İlk animasyon oynatılıyor.');
-                          const action = mixer.clipAction(animations[0]);
-                          action.play();
-                      }
-                  }
-              },
-              (xhr) => {
-                  console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-              },
-              (error) => {
-                  console.error('An error happened', error);
+              animations = gltf.animations;
+              if (animations && animations.length) {
+                  mixer = new THREE.AnimationMixer(player);
               }
-          );
-      }
+              
+              // Modeli yükledikten sonra animate döngüsünü başlat
+              // Bu sayede oyun ekranı yüklenir yüklenmez animasyon oynatabiliriz
+              animate();
+          },
+          (xhr) => {
+              console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+          },
+          (error) => {
+              console.error('An error happened', error);
+          }
+      );
 
       window.addEventListener("resize", () => {
           camera.aspect = window.innerWidth / window.innerHeight;
@@ -115,11 +80,47 @@ window.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // ----------------- Start Game -----------------
+  // Başlangıçta sadece sahnemizi başlat
+  init();
+
+  // ----------------- Oyun Başlatma Mantığı -----------------
+  overlay.addEventListener("click", () => {
+      // Overlay'i gizle
+      overlay.style.display = "none";
+      
+      // Dance animasyonunu bul ve oynat
+      const danceClip = animations.find(clip => clip.name === 'dance');
+      if (danceClip) {
+          const action = mixer.clipAction(danceClip);
+          action.setLoop(THREE.LoopOnce); // Animasyon sadece bir kez oynatılacak
+          action.clampWhenFinished = true; // Bittiğinde son karede dur
+          action.play();
+      } else {
+          console.error('dance animasyonu bulunamadı.');
+      }
+
+      // 4 saniye sonra oyunu başlat
+      setTimeout(() => {
+          startGame();
+      }, 4000);
+  });
+
+  // ----------------- Oyun Başlatma Fonksiyonu -----------------
   function startGame() {
-      init();
+      // Koşma animasyonuna geçiş yap
+      const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
+      if (walkProudClip) {
+          mixer.stopAllAction(); // Önceki animasyonları durdur
+          const action = mixer.clipAction(walkProudClip);
+          action.setLoop(THREE.LoopRepeat); // Sonsuz döngüde tekrar et
+          action.play();
+          // Animasyon hızını başlangıçta 2'ye ayarla
+          mixer.timeScale = 2;
+      }
+
+      // Skoru sıfırla ve oyunu başlat
+      score = 0;
       gameStarted = true;
-      animate();
   }
 
   // ----------------- Animate -----------------
@@ -128,8 +129,10 @@ window.addEventListener("DOMContentLoaded", () => {
       
       const delta = clock.getDelta();
       if (mixer) {
-          // Animasyon hızını yavaştan başlatmak yerine 2'den başlat ve 4'e kadar artır
-          mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); 
+          if (gameStarted) {
+            // Animasyon hızını yavaştan başlatmak yerine 2'den başlat ve 4'e kadar artır
+            mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); 
+          }
           mixer.update(delta);
       }
       

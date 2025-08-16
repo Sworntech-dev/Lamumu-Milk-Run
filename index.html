@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Cow Runner - Click Character</title>
+  <title>Cow Runner</title>
   <style>
     body {
       margin: 0;
@@ -24,16 +24,11 @@
       justify-content: center;
       align-items: center;
       z-index: 10;
+      cursor: pointer; /* Tıklanabilir olduğunu göstermek için */
     }
 
-    .charBox {
-      width: 80px;
-      height: 80px;
-      margin: 20px;
-      display: inline-block;
-      cursor: pointer;
-      border: 3px solid white;
-      border-radius: 8px;
+    #overlay h1 {
+        font-size: 4em;
     }
 
     #scoreBoard {
@@ -44,26 +39,21 @@
       font-weight: bold;
       background: rgba(0,0,0,0.5);
       padding: 8px 12px;
-      border-radius: 8px;
-      color: #fff;
+      border-radius: 5px;
+      color: white;
       z-index: 5;
     }
   </style>
 </head>
 <body>
+  
   <div id="overlay">
-    <h1>Cow Runner</h1>
-    <p>Click a character to start:</p>
-    <div>
-      <div id="charGreen" class="charBox" style="background-color: green;"></div>
-      <div id="charBlack" class="charBox" style="background-color: black;"></div>
-    </div>
+    <h1 id="startText">Start Game</h1>
   </div>
-
   <div id="scoreBoard">Score: 0</div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
