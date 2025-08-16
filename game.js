@@ -158,30 +158,26 @@ window.addEventListener("DOMContentLoaded", () => {
       const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
       const obstacle = randomModel.clone();
       
-      // Yeni yaklaşım: Ölçek ve dönüş için bir grup kullanma
-      const obstacleGroup = new THREE.Group();
-      obstacleGroup.add(obstacle);
-      
       const laneIndex = Math.floor(Math.random() * lanes.length);
-      obstacleGroup.position.set(lanes[laneIndex], 0, -50);
+      obstacle.position.set(lanes[laneIndex], 0, -50);
 
       // Engelleri ekrana doğru döndürme
-      obstacleGroup.rotation.y = Math.PI;
+      obstacle.rotation.y = Math.PI;
 
       // Modelin kendisine göre scale ve pozisyon ayarı
       if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
       } else if (randomModel.name === "scarecrow") {
-          obstacleGroup.scale.set(4, 4, 4); 
-          obstacleGroup.position.y = 1;
+          obstacle.scale.set(3, 3, 3); // 3 katı arttırıldı
+          obstacle.position.y = 1.5; // Zemine tam oturması için ayarlandı
       } else if (randomModel.name === "hayBale") {
-          obstacleGroup.scale.set(2.5, 2.5, 2.5);
-          obstacleGroup.position.y = -0.5;
+          obstacle.scale.set(1.5, 1.5, 1.5); // 5 katı arttırıldı
+          obstacle.position.y = -0.4; // Zemine tam oturması için ayarlandı
       }
       
-      scene.add(obstacleGroup);
-      obstacles.push(obstacleGroup);
+      scene.add(obstacle);
+      obstacles.push(obstacle);
   }
 
   function createMilkCarton() {
