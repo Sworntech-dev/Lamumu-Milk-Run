@@ -19,6 +19,7 @@ let gameSpeed = 0;
 const maxSpeed = 0.06; 
 const gameSpeedIncrement = 0.00001; 
 let spawnCooldown = 0; 
+let animateStarted = false; // animate döngüsü başladı mı
 
 // Başlangıçta start butonu pasif
 startBtn.disabled = true;
@@ -45,7 +46,6 @@ window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
 init();
-animate();
 
 function init(){
     scene = new THREE.Scene();
@@ -83,6 +83,12 @@ function init(){
 
         // Model yüklendi → start butonunu aktif yap
         startBtn.disabled = false;
+
+        // Animate döngüsünü başlat, sadece bir kez
+        if(!animateStarted){
+            animateStarted = true;
+            animate();
+        }
     }, undefined, function(error){
         console.error('GLTF yükleme hatası:', error);
     });
@@ -91,7 +97,6 @@ function init(){
 function spawnItem(){
     const zPos = -25;
 
-    // Engel spawn %20 olasılık
     if(Math.random()<0.2){
         const freeLanes = lanes.slice();
         const laneIndex = Math.floor(Math.random() * freeLanes.length);
@@ -102,7 +107,6 @@ function spawnItem(){
         obstacles.push(box);
     }
 
-    // Süt spawn %20 olasılık
     if(Math.random()<0.2){
         const freeLanes = lanes.slice();
         const laneIndex = Math.floor(Math.random() * freeLanes.length);
@@ -133,7 +137,7 @@ function gameOver(){
 function animate(){
     requestAnimationFrame(animate);
 
-    if(!gameStarted || !player) return;
+    if(!gameStarted) return; // player kesin yüklü olduğundan null kontrolü gerek yok
 
     if(gameSpeed < maxSpeed) gameSpeed += gameSpeedIncrement;
 
@@ -142,7 +146,6 @@ function animate(){
 
     player.position.x += (targetX - player.position.x)*0.2;
 
-    // Spawn cooldown
     spawnCooldown -= gameSpeed*5;
     if(spawnCooldown <= 0){
         spawnItem();
