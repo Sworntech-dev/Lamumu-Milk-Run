@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer, player;
 let obstacles = [], milks = [];
@@ -17,7 +18,7 @@ let gameStarted = false;
 let gameSpeed = 0; 
 const maxSpeed = 0.06; 
 const gameSpeedIncrement = 0.00001; 
-let spawnCooldown = 0; // Z bazlı spawn aralığı
+let spawnCooldown = 0; 
 
 startBtn.addEventListener('click', () => {
     startGame();
@@ -30,7 +31,7 @@ function startGame(){
     gameSpeed = 0.02; 
     obstacles.forEach(o=>scene.remove(o)); obstacles=[];
     milks.forEach(m=>scene.remove(m)); milks=[];
-    player.position.set(lanes[1],0,0);
+    if(player) player.position.set(lanes[1],0,0);
     currentLane = 1;
     targetX = lanes[currentLane];
     spawnCooldown = 0;
@@ -59,6 +60,9 @@ function init(){
     light.position.set(10,10,10);
     scene.add(light);
 
+    const ambient = new THREE.AmbientLight(0x888888);
+    scene.add(ambient);
+
     const groundGeo = new THREE.PlaneGeometry(10,50);
     const groundMat = new THREE.MeshPhongMaterial({color:0x228B22});
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -66,12 +70,16 @@ function init(){
     ground.position.z = 0;
     scene.add(ground);
 
-    player = new THREE.Mesh(
-        new THREE.BoxGeometry(1,1,1),
-        new THREE.MeshPhongMaterial({color:0xffffff})
-    );
-    player.position.set(lanes[currentLane],0,0);
-    scene.add(player);
+    // Player = inek modeli
+    const loader = new GLTFLoader();
+    loader.load('cow/scene.gltf', function(gltf){
+        player = gltf.scene;
+        player.scale.set(0.5,0.5,0.5);
+        player.position.set(lanes[currentLane], 0.25, 0); // y yüksekliği ayarlandı
+        scene.add(player);
+    }, undefined, function(error){
+        console.error('GLTF yükleme hatası:', error);
+    });
 }
 
 function spawnItem(){
@@ -102,10 +110,10 @@ function spawnItem(){
 
 function updateScoreboard(){
     let wlChance = 0;
-    if(score>=500) wlChance=100;
-    else if(score>=300) wlChance=75;
-    else if(score>=200) wlChance=50;
-    else if(score>=100) wlChance=25;
+    if(score>=50) wlChance=100;
+    else if(score>=25) wlChance=75;
+    else if(score>=15) wlChance=50;
+    else if(score>=5) wlChance=25;
     scoreboard.innerText = `Score: ${score} | WL Chance: ${wlChance}%`;
 }
 
@@ -119,23 +127,20 @@ function gameOver(){
 function animate(){
     requestAnimationFrame(animate);
 
-    if(!gameStarted) return;
+    if(!gameStarted || !player) return;
 
-    // Hız kademeli artış
     if(gameSpeed < maxSpeed) gameSpeed += gameSpeedIncrement;
 
-    // WASD lane switch
     if(keys['a'] && currentLane>0){ currentLane--; keys['a']=false; targetX=lanes[currentLane]; }
     if(keys['d'] && currentLane<2){ currentLane++; keys['d']=false; targetX=lanes[currentLane]; }
 
-    // Smooth lane movement
     player.position.x += (targetX - player.position.x)*0.2;
 
-    // Spawn cooldown kontrolü
+    // Spawn cooldown
     spawnCooldown -= gameSpeed*5;
     if(spawnCooldown <= 0){
         spawnItem();
-        spawnCooldown = 5; // minimum Z aralığı
+        spawnCooldown = 5;
     }
 
     const playerBox = new THREE.Box3().setFromObject(player);
