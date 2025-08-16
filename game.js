@@ -89,7 +89,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const modelsToLoad = [
         { name: 'cow', path: 'dancing_cow.glb' },
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
-        { name: 'hayBale', path: 'hay_bale.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
         { name: 'chickenCoop', path: 'chicken_coop.glb' },
         { name: 'scarecrow', path: 'scarecrow_for_farm.glb' }
@@ -123,11 +122,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
             },
             (xhr) => {
-                // Yüklenme ilerlemesini konsola yazdırıyoruz.
                 console.log(`Model yükleniyor: ${model.name} ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
             },
             (error) => {
-                // Hata mesajını daha açık hale getirdik.
                 console.error(`Yükleme hatası: ${model.path} dosyası bulunamadı veya yüklenemedi.`, error);
             }
         );
@@ -165,10 +162,7 @@ window.addEventListener("DOMContentLoaded", () => {
       obstacle.position.set(lanes[laneIndex], 0, -50);
 
       // Modelin kendisine göre scale ve pozisyon ayarı
-      if (randomModel.name === "hay_bale") {
-          obstacle.scale.set(0.3, 0.3, 0.3);
-          obstacle.position.y = -0.4;
-      } else if (randomModel.name === "windmill") {
+      if (randomModel.name === "windmill") {
           obstacle.scale.set(1, 1, 1);
           obstacle.position.y = 1;
       } else if (randomModel.name === "chickenCoop") {
