@@ -69,7 +69,7 @@ window.addEventListener("DOMContentLoaded", () => {
           // Load Model
           const loader = new THREE.GLTFLoader();
           loader.load(
-              'cow_-_farm_animal_-_3december2022.glb',
+              'cow_run.glb', // Yeni modelinizin adı
               (gltf) => {
                   player = gltf.scene;
                   player.position.set(0, 0, 0); 
