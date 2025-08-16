@@ -1,21 +1,18 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lamumu Süt Koşusu</title>
+  <title>Lamumu Milk Run</title>
   <style>
-    canvas { 
-      display: block; 
-      margin: 0 auto; 
-      background: #a3d9a5; /* Çiftlik temalı arka plan */
-    }
-    body { text-align:center; font-family: sans-serif; }
+    body { margin:0; overflow:hidden; font-family:sans-serif; }
+    #scoreboard { position:absolute; top:10px; left:10px; color:white; font-size:20px; }
+    #instructions { position:absolute; bottom:10px; left:10px; color:white; font-size:16px; }
   </style>
 </head>
 <body>
-  <h1>Lamumu Süt Koşusu</h1>
-  <p>Puan: <span id="score">0</span></p>
-  <canvas id="gameCanvas" width="480" height="640"></canvas>
-  <script src="game.js"></script>
+  <div id="scoreboard">Score: 0 | WL Chance: 0%</div>
+  <div id="instructions">Use A/D to switch lanes</div>
+  <script type="module" src="game.js"></script>
 </body>
 </html>

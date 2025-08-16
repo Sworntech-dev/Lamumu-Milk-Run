@@ -1,0 +1,11 @@
+Model Information:
+* title:	Holy Cow
+* source:	https://sketchfab.com/3d-models/holy-cow-75be8a5250bd423c9ed366d0a7b7d10b
+* author:	pocolov (https://sketchfab.com/pocolov)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Holy Cow" (https://sketchfab.com/3d-models/holy-cow-75be8a5250bd423c9ed366d0a7b7d10b) by pocolov (https://sketchfab.com/pocolov) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
