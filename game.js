@@ -193,7 +193,7 @@ function startGame() {
     const action = mixer.clipAction(walkProudClip);
     action.setLoop(THREE.LoopRepeat);
     action.play();
-    mixer.timeScale = 1;
+    mixer.timeScale = 2;
   }
 
   score = 0;
@@ -219,7 +219,7 @@ function animate() {
   const delta = clock.getDelta();
   if (mixer) {
     if (gameStarted) {
-      mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05);
+      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
     }
     mixer.update(delta);
   }
