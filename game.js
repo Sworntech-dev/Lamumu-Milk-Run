@@ -91,7 +91,7 @@ window.addEventListener("DOMContentLoaded", () => {
         { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
         { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
         { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
-        { name: 'waterWell', path: 'old_water_well.glb' }
+        { name: 'hayBale', path: 'simple_hay_bale.glb' }
     ];
 
     let loadedCount = 0;
@@ -168,9 +168,9 @@ window.addEventListener("DOMContentLoaded", () => {
       } else if (randomModel.name === "scarecrow") {
           obstacle.scale.set(0.5, 0.5, 0.5);
           obstacle.position.y = 0;
-      } else if (randomModel.name === "waterWell") {
-          obstacle.scale.set(0.5, 0.5, 0.5);
-          obstacle.position.y = 0;
+      } else if (randomModel.name === "hayBale") {
+          obstacle.scale.set(0.3, 0.3, 0.3);
+          obstacle.position.y = -0.4;
       }
       
       scene.add(obstacle);
