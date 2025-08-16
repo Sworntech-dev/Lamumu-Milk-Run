@@ -1,113 +1,117 @@
+// game.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer;
-let cow, mixer;
+let player, playerBox, playerCow;
+let mixers = [];
 let clock = new THREE.Clock();
-
-let lanes = [ -2, 0, 2 ]; 
-let currentLane = 1;
-let moveDirection = 0;
-
 let obstacles = [];
 let milks = [];
-
 let score = 0;
-let speed = 0.05;
-let gameStarted = false;
-let gameOver = false;
+let gameSpeed = 0.05;
+let isGameRunning = false;
+let selectedCharacter = "box"; // default
 
-const startButton = document.getElementById("startButton");
-const gameOverScreen = document.getElementById("gameOverScreen");
-const finalScoreText = document.getElementById("finalScore");
-const restartButton = document.getElementById("restartButton");
+// HTML UI
+const startScreen = document.getElementById("startScreen");
+const endScreen = document.getElementById("endScreen");
+const startBoxBtn = document.getElementById("startBox");
+const startCowBtn = document.getElementById("startCow");
+const restartBtn = document.getElementById("restartBtn");
+const scoreDisplay = document.getElementById("score");
+const finalScore = document.getElementById("finalScore");
 
-startButton.addEventListener("click", startGame);
-restartButton.addEventListener("click", restartGame);
-
-function startGame() {
-    gameStarted = true;
-    gameOver = false;
-    score = 0;
-    speed = 0.05;
-    obstacles.forEach(o => scene.remove(o));
-    milks.forEach(m => scene.remove(m));
-    obstacles = [];
-    milks = [];
-    cow.position.set(0, 0, 0);
-    gameOverScreen.style.display = "none";
-    startButton.style.display = "none";
-}
-
-function restartGame() {
-    startGame();
-}
-
-function endGame() {
-    gameOver = true;
-    gameOverScreen.style.display = "block";
-    finalScoreText.textContent = "Score: " + score;
-}
+startBoxBtn.addEventListener("click", () => startGame("box"));
+startCowBtn.addEventListener("click", () => startGame("cow"));
+restartBtn.addEventListener("click", () => restartGame());
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xaaddff);
+    scene.background = new THREE.Color(0x87ceeb);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 5, 10);
-    camera.lookAt(0, 0, 0);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+    // Light
+    const light = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
     scene.add(light);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 7.5);
-    scene.add(dirLight);
+    // Floor
+    const floorGeometry = new THREE.PlaneGeometry(50, 200, 10, 10);
+    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x228b22 });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
 
-    const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(20, 1000),
-        new THREE.MeshStandardMaterial({ color: 0x228822 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
+    // Player placeholder (box)
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    playerBox = new THREE.Mesh(geometry, material);
 
-    // 🐄 COW MODEL LOAD
+    // Load Cow
     const loader = new GLTFLoader();
-    loader.load('./cow_-_farm_animal_-_3december2022.glb', (gltf) => {
-        cow = gltf.scene;
-        cow.scale.set(2, 2, 2);
-        cow.position.set(0, 0, 0);
-        scene.add(cow);
+    loader.load('/cow_-_farm_animal_-_3december2022.glb', function (gltf) {
+        playerCow = gltf.scene;
+        playerCow.scale.set(0.5, 0.5, 0.5);
+        playerCow.visible = false;
+        scene.add(playerCow);
 
-        // Animations (if available in model)
-        if (gltf.animations && gltf.animations.length > 0) {
-            mixer = new THREE.AnimationMixer(cow);
+        if (gltf.animations.length > 0) {
+            const mixer = new THREE.AnimationMixer(playerCow);
             mixer.clipAction(gltf.animations[0]).play();
+            mixers.push(mixer);
         }
     });
 
-    document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("resize", onWindowResize);
+    window.addEventListener("resize", onWindowResize, false);
 }
 
-function onKeyDown(event) {
-    if (!gameStarted || gameOver) return;
-    if (event.key === "a" && currentLane > 0) {
-        currentLane--;
-    } else if (event.key === "d" && currentLane < lanes.length - 1) {
-        currentLane++;
+function startGame(character) {
+    selectedCharacter = character;
+    startScreen.style.display = "none";
+    endScreen.style.display = "none";
+    score = 0;
+    gameSpeed = 0.05;
+    obstacles = [];
+    milks = [];
+
+    if (character === "box") {
+        player = playerBox;
+        player.position.set(0, 0.5, 0);
+        scene.add(player);
+    } else if (character === "cow" && playerCow) {
+        player = playerCow;
+        player.position.set(0, 0, 0);
+        player.visible = true;
     }
+
+    isGameRunning = true;
+}
+
+function endGame() {
+    isGameRunning = false;
+    endScreen.style.display = "flex";
+    finalScore.textContent = score;
+    if (player === playerCow) player.visible = false;
+    if (player === playerBox) scene.remove(playerBox);
+}
+
+function restartGame() {
+    startScreen.style.display = "flex";
+    endScreen.style.display = "none";
 }
 
 function spawnObstacle() {
     const geometry = new THREE.BoxGeometry(1, 2, 1);
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const material = new THREE.MeshStandardMaterial({ color: 0x0000ff });
     const obstacle = new THREE.Mesh(geometry, material);
-    obstacle.position.set(lanes[Math.floor(Math.random() * 3)], 1, -50);
+    const lane = Math.floor(Math.random() * 3) - 1;
+    obstacle.position.set(lane * 3, 1, -100);
     scene.add(obstacle);
     obstacles.push(obstacle);
 }
@@ -116,59 +120,66 @@ function spawnMilk() {
     const geometry = new THREE.SphereGeometry(0.5, 16, 16);
     const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const milk = new THREE.Mesh(geometry, material);
-    milk.position.set(lanes[Math.floor(Math.random() * 3)], 0.5, -50);
+    const lane = Math.floor(Math.random() * 3) - 1;
+    milk.position.set(lane * 3, 0.5, -100);
     scene.add(milk);
     milks.push(milk);
+}
+
+function detectCollisions() {
+    if (!player) return;
+
+    const playerBox3 = new THREE.Box3().setFromObject(player);
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obstacleBox = new THREE.Box3().setFromObject(obstacles[i]);
+        if (playerBox3.intersectsBox(obstacleBox)) {
+            endGame();
+        }
+    }
+
+    for (let i = milks.length - 1; i >= 0; i--) {
+        const milkBox = new THREE.Box3().setFromObject(milks[i]);
+        if (playerBox3.intersectsBox(milkBox)) {
+            scene.remove(milks[i]);
+            milks.splice(i, 1);
+            score += 10;
+        }
+    }
 }
 
 function animate() {
     requestAnimationFrame(animate);
 
-    let delta = clock.getDelta();
-    if (mixer) mixer.update(delta);
+    const delta = clock.getDelta();
+    mixers.forEach(mixer => mixer.update(delta));
 
-    if (gameStarted && !gameOver) {
-        if (cow) {
-            cow.position.x += (lanes[currentLane] - cow.position.x) * 0.2;
-        }
+    if (isGameRunning) {
+        scoreDisplay.textContent = score;
 
+        // move objects
+        obstacles.forEach(obstacle => obstacle.position.z += gameSpeed);
+        milks.forEach(milk => milk.position.z += gameSpeed);
+
+        // cleanup
+        obstacles = obstacles.filter(o => o.position.z < 20);
+        milks = milks.filter(m => m.position.z < 20);
+
+        // spawn
         if (Math.random() < 0.02) spawnObstacle();
-        if (Math.random() < 0.01) spawnMilk();
+        if (Math.random() < 0.015) spawnMilk();
 
-        obstacles.forEach((obstacle, index) => {
-            obstacle.position.z += speed;
-            if (cow && obstacle.position.distanceTo(cow.position) < 1.5) {
-                endGame();
-            }
-            if (obstacle.position.z > 10) {
-                scene.remove(obstacle);
-                obstacles.splice(index, 1);
-            }
-        });
+        // speed up slowly
+        gameSpeed = Math.min(0.3, gameSpeed + 0.00001);
 
-        milks.forEach((milk, index) => {
-            milk.position.z += speed;
-            if (cow && milk.position.distanceTo(cow.position) < 1.5) {
-                score += 10;
-                scene.remove(milk);
-                milks.splice(index, 1);
-            }
-            if (milk.position.z > 10) {
-                scene.remove(milk);
-                milks.splice(index, 1);
-            }
-        });
-
-        speed = Math.min(speed + 0.00005, 0.3);
-
-        document.getElementById("score").textContent = "Score: " + score;
+        detectCollisions();
     }
 
     renderer.render(scene, camera);
 }
 
 function onWindowResize() {
-    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }

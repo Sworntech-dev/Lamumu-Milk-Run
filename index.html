@@ -1,12 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>3D Model Test</title>
-    <style>
-        body { margin: 0; overflow: hidden; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Cow Runner</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #87ceeb;
+    }
+
+    #overlay, #gameOverScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    #overlay.hidden, #gameOverScreen.hidden {
+      display: none;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #scoreBoard {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 22px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.5);
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #fff;
+      z-index: 5;
+    }
+  </style>
 </head>
 <body>
-    <script type="module" src="test.js"></script>
+  <!-- Menü ekranı -->
+  <div id="overlay">
+    <h1>Cow Runner</h1>
+    <p>Select your character:</p>
+    <div>
+      <button onclick="selectCharacter('box')">Box</button>
+      <button onclick="selectCharacter('cow')">Cow</button>
+    </div>
+    <button id="startButton" onclick="startGame()" disabled>Start Game</button>
+  </div>
+
+  <!-- Skor göstergesi -->
+  <div id="scoreBoard">Score: 0</div>
+
+  <!-- Oyun Bitti ekranı -->
+  <div id="gameOverScreen" class="hidden">
+    <h1>Game Over</h1>
+    <p id="finalScore"></p>
+    <button onclick="restartGame()">Restart</button>
+  </div>
+
+  <script type="module" src="game.js"></script>
 </body>
 </html>
