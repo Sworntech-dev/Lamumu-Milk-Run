@@ -90,6 +90,8 @@ window.addEventListener("DOMContentLoaded", () => {
                       if (walkProudClip) {
                           const action = mixer.clipAction(walkProudClip);
                           action.play();
+                          // Animasyonun başlangıç hızını 2 olarak ayarla
+                          mixer.timeScale = 2;
                       } else {
                           console.log('walk_proud animasyonu bulunamadı. İlk animasyon oynatılıyor.');
                           const action = mixer.clipAction(animations[0]);
@@ -126,8 +128,8 @@ window.addEventListener("DOMContentLoaded", () => {
       
       const delta = clock.getDelta();
       if (mixer) {
-          // Animasyon hızını zamanla artır
-          mixer.timeScale = Math.min(2, mixer.timeScale + delta * 0.05); // Hızı 2'ye kadar artırır
+          // Animasyon hızını yavaştan başlatmak yerine 2'den başlat ve 4'e kadar artır
+          mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05); 
           mixer.update(delta);
       }
       
