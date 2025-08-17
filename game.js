@@ -16,6 +16,10 @@ let gameStarted = false;
 let gameOver = false;
 let score = 0;
 
+// Müzik değişkenleri
+let synth;
+let loop;
+
 // Şerit pozisyonları
 const lanes = [-3, 0, 3];
 let currentLane = 1;
@@ -79,16 +83,30 @@ function init() {
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Şerit çizgilerini init fonksiyonundan kaldırdık
-  // createDashedLaneLines();
-
   loadModels();
+  setupMusic();
 
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+}
+
+function setupMusic() {
+  // Basit bir synthesizer oluştur
+  synth = new Tone.Synth().toDestination();
+
+  // Çalınacak notalar dizisi
+  const notes = ["C4", "E4", "G4", "A4", "G4", "E4"];
+
+  // Notaları belirli bir tempoda çalacak bir dizi oluştur
+  loop = new Tone.Sequence((time, note) => {
+    synth.triggerAttackRelease(note, "8n", time);
+  }, notes, "4n").start(0);
+
+  // Tempo ayarlaması
+  Tone.Transport.bpm.value = 120;
 }
 
 function createDashedLaneLines() {
@@ -164,6 +182,10 @@ function loadModels() {
 
 startButton.addEventListener("click", () => {
   overlay.style.display = "none";
+  // Tarayıcı kısıtlamaları nedeniyle ses bağlamını başlat
+  Tone.start();
+  Tone.Transport.start();
+
   const danceClip = animations.find(clip => clip.name === 'dance');
   if (danceClip) {
     const action = mixer.clipAction(danceClip);
@@ -245,6 +267,8 @@ function endGame() {
   mixer.stopAllAction();
   finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
+  // Oyun bittiğinde müziği durdur
+  Tone.Transport.stop();
 }
 
 function animate() {
