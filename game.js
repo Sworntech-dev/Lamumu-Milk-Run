@@ -79,8 +79,8 @@ function init() {
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Şerit çizgilerini oluşturma
-  createDashedLaneLines();
+  // Şerit çizgilerini init fonksiyonundan kaldırdık
+  // createDashedLaneLines();
 
   loadModels();
 
@@ -172,6 +172,8 @@ startButton.addEventListener("click", () => {
     action.play();
   }
   setTimeout(() => {
+    // Dans animasyonu bittikten sonra çizgileri oluştur
+    createDashedLaneLines();
     startGame();
   }, 4000);
 });
@@ -262,13 +264,16 @@ function animate() {
     const speed = mixer.timeScale * 0.1;
     const totalSegmentLength = lineDashLength + lineGap;
     
-    laneLines.forEach(line => {
-      line.position.z += speed;
-      // Çizgi parçası oyuncunun görüş alanının önüne geçtiğinde onu arkaya taşı
-      if (line.position.z > player.position.z + 5) {
-        line.position.z -= totalSegmentLength * (laneLines.length / 2);
-      }
-    });
+    // Yalnızca çizgiler oluşturulduysa döngüye devam et
+    if (laneLines.length > 0) {
+      laneLines.forEach(line => {
+        line.position.z += speed;
+        // Çizgi parçası oyuncunun görüş alanının önüne geçtiğinde onu arkaya taşı
+        if (line.position.z > player.position.z + 5) {
+          line.position.z -= totalSegmentLength * (laneLines.length / 2);
+        }
+      });
+    }
   }
   renderer.render(scene, camera);
   if (!gameStarted || gameOver) {
