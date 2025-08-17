@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dans Eden İnek</title>
+    <title>LAMUMU MILK RUN</title>
     <style>
         body {
             margin: 0;
@@ -67,25 +67,25 @@
             z-index: 5;
         }
     </style>
-    <!-- THREE.js ve GLTFLoader kütüphaneleri -->
+    <!-- THREE.js and GLTFLoader libraries -->
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script async src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <!-- Tone.js kütüphanesi -->
+    <!-- Tone.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
     <div id="overlay">
-        <h1>Dans Eden İnek</h1>
-        <button id="startButton">Oyunu Başlat</button>
+        <h1>LAMUMU MILK RUN</h1>
+        <button id="startButton">Start Game</button>
     </div>
     <div id="gameOverOverlay" style="display: none;">
-        <h1>Oyun Bitti!</h1>
+        <h1>Game Over!</h1>
         <p id="finalScoreText"></p>
-        <button id="restartButton">Yeniden Başla</button>
+        <button id="restartButton">Restart</button>
     </div>
     <p id="scoreBoard">Score: 0</p>
     
-    <!-- Oyun mantığı için game.js dosyasını dahil et -->
+    <!-- Include game.js file for game logic -->
     <script async src="game.js"></script>
 </body>
 </html>

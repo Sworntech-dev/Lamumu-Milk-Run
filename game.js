@@ -1,4 +1,4 @@
-// DOM elemanlarını seçme
+// Selecting DOM elements
 const overlay = document.getElementById("overlay");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
 const scoreBoard = document.getElementById("scoreBoard");
@@ -6,42 +6,38 @@ const startButton = document.getElementById("startButton");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
 
-// Oyun değişkenleri
+// Game variables
 let scene, camera, renderer;
 let player = null;
-let mixer;
-let animations;
+let mixer; // Not used anymore but kept for compatibility
+let animations; // Not used anymore but kept for compatibility
 let clock = new THREE.Clock();
 let gameStarted = false;
 let gameOver = false;
 let score = 0;
 
-// Müzik değişkenleri
+// Music variables
 let synth;
 let loop;
 
-// Şerit pozisyonları
+// Lane positions
 const lanes = [-3, 0, 3];
 let currentLane = 1;
 
-// Nesneleri tutacak diziler
+// Arrays to hold objects
 const obstacles = [];
 const milkCartons = [];
 
 let spawnTimer = 0;
 const spawnInterval = 1;
 
-// 3D modelleri
-let milkCartonModel;
-let obstacleModels = [];
-
-// Çizgiler için global değişkenler
+// Global variables for road lines
 let laneLines = [];
-const lineDashLength = 5; // Bir çizgi parçasının uzunluğu
-const lineGap = 5; // İki çizgi arasındaki boşluk
-const totalLineLength = 100; // Yolun toplam görsel uzunluğu
+const lineDashLength = 5;
+const lineGap = 5;
+const totalLineLength = 100;
 
-// Klavye Kontrolleri
+// Keyboard Controls
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
 
@@ -67,7 +63,7 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Işıklandırma
+  // Lighting
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(5, 10, 7);
   scene.add(light);
@@ -75,16 +71,21 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Zemin oluşturma
+  // Ground
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
     new THREE.MeshStandardMaterial({ color: 0x228B22 })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
+  
+  // Create simple player, obstacles, and collectibles
+  player = createPlayerModel();
+  scene.add(player);
 
-  loadModels();
+  createDashedLaneLines();
   setupMusic();
+  animate();
 
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -93,19 +94,36 @@ function init() {
   });
 }
 
+function createPlayerModel() {
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Blue cube
+  const cube = new THREE.Mesh(geometry, material);
+  cube.position.set(lanes[currentLane], 0.5, 0);
+  return cube;
+}
+
+function createObstacleModel() {
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red cube
+  const obstacle = new THREE.Mesh(geometry, material);
+  obstacle.position.y = 0.5;
+  return obstacle;
+}
+
+function createMilkCartonModel() {
+  const geometry = new THREE.SphereGeometry(0.5, 32, 16);
+  const material = new THREE.MeshBasicMaterial({ color: 0xffd700 }); // Gold sphere
+  const collectible = new THREE.Mesh(geometry, material);
+  collectible.position.y = 0.5;
+  return collectible;
+}
+
 function setupMusic() {
-  // Basit bir synthesizer oluştur
   synth = new Tone.Synth().toDestination();
-
-  // Çalınacak notalar dizisi
   const notes = ["C4", "E4", "G4", "A4", "G4", "E4"];
-
-  // Notaları belirli bir tempoda çalacak bir dizi oluştur
   loop = new Tone.Sequence((time, note) => {
     synth.triggerAttackRelease(note, "8n", time);
   }, notes, "4n").start(0);
-
-  // Tempo ayarlaması
   Tone.Transport.bpm.value = 120;
 }
 
@@ -130,74 +148,11 @@ function createDashedLaneLines() {
   }
 }
 
-function loadModels() {
-  const loader = new THREE.GLTFLoader();
-  const modelsToLoad = [
-    { name: 'cow', path: 'dancing_cow.glb' },
-    { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
-    { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
-    { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
-    { name: 'hay_bales', path: 'hay_bales.glb' }
-  ];
-
-  let loadedCount = 0;
-
-  modelsToLoad.forEach(model => {
-    loader.load(
-      model.path,
-      (gltf) => {
-        const modelName = model.name;
-        gltf.scene.name = modelName;
-
-        if (model.name === 'cow') {
-          player = gltf.scene;
-          player.position.set(lanes[currentLane], 0, 0);
-          player.rotation.y = Math.PI;
-          player.scale.set(1, 1, 1);
-          scene.add(player);
-          animations = gltf.animations;
-          if (animations && animations.length) {
-            mixer = new THREE.AnimationMixer(player);
-          }
-        } else if (model.name === 'milkCarton') {
-          milkCartonModel = gltf.scene;
-        } else {
-          obstacleModels.push(gltf.scene);
-        }
-
-        loadedCount++;
-        if (loadedCount === modelsToLoad.length) {
-          animate();
-        }
-      },
-      (xhr) => {
-        console.log(`Model yükleniyor: ${model.name} ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
-      },
-      (error) => {
-        console.error(`Yükleme hatası: ${model.path} dosyası bulunamadı veya yüklenemedi.`, error);
-      }
-    );
-  });
-}
-
 startButton.addEventListener("click", () => {
   overlay.style.display = "none";
-  // Tarayıcı kısıtlamaları nedeniyle ses bağlamını başlat
   Tone.start();
   Tone.Transport.start();
-
-  const danceClip = animations.find(clip => clip.name === 'dance');
-  if (danceClip) {
-    const action = mixer.clipAction(danceClip);
-    action.setLoop(THREE.LoopOnce);
-    action.clampWhenFinished = true;
-    action.play();
-  }
-  setTimeout(() => {
-    // Dans animasyonu bittikten sonra çizgileri oluştur
-    createDashedLaneLines();
-    startGame();
-  }, 4000);
+  startGame();
 });
 
 restartButton.addEventListener("click", () => {
@@ -205,33 +160,17 @@ restartButton.addEventListener("click", () => {
 });
 
 function createObstacle() {
-  if (obstacleModels.length === 0) return;
-  const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
-  const obstacle = randomModel.clone();
-  obstacle.position.copy(obstaclePosition);
-  obstacle.rotation.y = Math.PI * 1.5;
-  if (randomModel.name === "windmill") {
-    obstacle.scale.set(1, 1, 1);
-    obstacle.position.y = 0;
-  } else if (randomModel.name === "scarecrow") {
-    obstacle.scale.set(1, 1, 1);
-    obstacle.position.y = 0;
-  } else if (randomModel.name === "hay_bales") {
-    obstacle.scale.set(1.5, 1.5, 1.5);
-    obstacle.position.y = 1.1;
-  }
+  const obstacle = createObstacleModel();
+  obstacle.position.set(lanes[laneIndex], obstacle.position.y, -50);
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
 
 function createMilkCarton() {
-  if (!milkCartonModel) return;
-  const milkCarton = milkCartonModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  milkCarton.position.set(lanes[laneIndex], 0.5, -50);
-  milkCarton.scale.set(0.5, 0.5, 0.5);
+  const milkCarton = createMilkCartonModel();
+  milkCarton.position.set(lanes[laneIndex], milkCarton.position.y, -50);
   scene.add(milkCarton);
   milkCartons.push(milkCarton);
 }
@@ -245,14 +184,6 @@ function spawnObjects() {
 }
 
 function startGame() {
-  const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
-  if (walkProudClip) {
-    mixer.stopAllAction();
-    const action = mixer.clipAction(walkProudClip);
-    action.setLoop(THREE.LoopRepeat);
-    action.play();
-    mixer.timeScale = 2;
-  }
   score = 0;
   gameStarted = true;
   gameOver = false;
@@ -264,41 +195,32 @@ function startGame() {
 function endGame() {
   gameOver = true;
   gameStarted = false;
-  mixer.stopAllAction();
   finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
-  // Oyun bittiğinde müziği durdur
   Tone.Transport.stop();
 }
 
 function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
-  if (mixer) {
-    if (gameStarted) {
-      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
-    }
-    mixer.update(delta);
-  }
+
   if (player && !gameOver) {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
-
-    // Kesikli çizgilerin hareketini ve döngüsünü yönetme
-    const speed = mixer.timeScale * 0.1;
-    const totalSegmentLength = lineDashLength + lineGap;
-    
-    // Yalnızca çizgiler oluşturulduysa döngüye devam et
-    if (laneLines.length > 0) {
-      laneLines.forEach(line => {
-        line.position.z += speed;
-        // Çizgi parçası oyuncunun görüş alanının önüne geçtiğinde onu arkaya taşı
-        if (line.position.z > player.position.z + 5) {
-          line.position.z -= totalSegmentLength * (laneLines.length / 2);
-        }
-      });
-    }
   }
+
+  // Update line positions
+  const speed = 2 * 0.1;
+  const totalSegmentLength = lineDashLength + lineGap;
+  if (laneLines.length > 0) {
+    laneLines.forEach(line => {
+      line.position.z += speed;
+      if (line.position.z > player.position.z + 5) {
+        line.position.z -= totalSegmentLength * (laneLines.length / 2);
+      }
+    });
+  }
+
   renderer.render(scene, camera);
   if (!gameStarted || gameOver) {
     return;
@@ -306,7 +228,7 @@ function animate() {
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
-    obstacle.position.z += mixer.timeScale * 0.1;
+    obstacle.position.z += speed;
     if (obstacle.position.z > 5) {
       scene.remove(obstacle);
       obstacles.splice(i, 1);
@@ -315,13 +237,14 @@ function animate() {
       Math.abs(player.position.x - obstacle.position.x) < 1 &&
       Math.abs(player.position.z - obstacle.position.z) < 1.5
     ) {
-      console.log("Game Over! Engelle çarpıştı.");
+      console.log("Game Over! Hit an obstacle.");
       endGame();
     }
   }
+
   for (let i = milkCartons.length - 1; i >= 0; i--) {
     const milkCarton = milkCartons[i];
-    milkCarton.position.z += mixer.timeScale * 0.1;
+    milkCarton.position.z += speed;
     if (milkCarton.position.z > 5) {
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
@@ -334,7 +257,7 @@ function animate() {
       scoreBoard.innerText = `Score: ${score}`;
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
-      console.log("Süt toplandı! Skor: " + score);
+      console.log("Collected a collectible! Score: " + score);
     }
   }
 }
