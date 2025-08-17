@@ -107,20 +107,26 @@ function setupSounds() {
   hitSound = new THREE.Audio(listener);
   const audioLoader = new THREE.AudioLoader();
   // ** ÖNEMLİ: Buraya doğrudan .mp3 veya .wav ses dosyasının URL'sini yapıştırın **
-  audioLoader.load('https://pixabay.com/sound-effects/thud-291047/', function(buffer) {
+  audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', function(buffer) {
     hitSound.setBuffer(buffer);
+  }, undefined, function(err) {
+    console.error('Çarpma sesi yüklenirken hata oluştu:', err);
   });
   
   // Süt toplama sesi için ses kaynağı
   collectSound = new THREE.Audio(listener);
-  audioLoader.load('https://pixabay.com/sound-effects/3-down-fast-1-106142/', function(buffer) {
+  audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', function(buffer) {
     collectSound.setBuffer(buffer);
+  }, undefined, function(err) {
+    console.error('Süt toplama sesi yüklenirken hata oluştu:', err);
   });
 
-  // Oyun bitti sesi için ses kaynağı
+  // Oyun bitti sesi için ses kaynağı - Yüklediğiniz dosyayı kullanıyoruz
   gameOverSound = new THREE.Audio(listener);
-  audioLoader.load('https://pixabay.com/sound-effects/game-over-arcade-6435/', function(buffer) {
+  audioLoader.load('uploaded:game-over-arcade-6435.mp3', function(buffer) {
     gameOverSound.setBuffer(buffer);
+  }, undefined, function(err) {
+    console.error('Oyun bitti sesi yüklenirken hata oluştu:', err);
   });
 }
 
@@ -129,10 +135,12 @@ function setupBackgroundMusic() {
     backgroundMusic = new THREE.Audio(listener);
     const audioLoader = new THREE.AudioLoader();
     // ** ÖNEMLİ: Buraya doğrudan .mp3 veya .wav müzik dosyasının URL'sini yapıştırın **
-    audioLoader.load('https://prosearch.tribeofnoise.com/artists/show/81095/42522', function(buffer) {
+    audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', function(buffer) {
       backgroundMusic.setBuffer(buffer);
       backgroundMusic.setLoop(true); // Müziği sürekli döngüye al
       backgroundMusic.setVolume(0.5); // Ses seviyesini ayarla
+    }, undefined, function(err) {
+      console.error('Arka plan müziği yüklenirken hata oluştu:', err);
     });
 }
 
@@ -224,7 +232,7 @@ function startGame() {
   score = 0;
   gameStarted = true;
   gameOver = false;
-  scoreBoard.innerText = `Score: ${score}`;
+  scoreBoard.innerText = `Skor: ${score}`;
   spawnObjects();
   setInterval(spawnObjects, 1000);
 }
@@ -232,7 +240,7 @@ function startGame() {
 function endGame() {
   gameOver = true;
   gameStarted = false;
-  finalScoreText.innerText = `Final Score: ${score}`;
+  finalScoreText.innerText = `Final Skor: ${score}`;
   gameOverOverlay.style.display = "flex";
   if (backgroundMusic.source) backgroundMusic.stop(); // Oyun bitince müziği durdur
   if (gameOverSound.source) gameOverSound.play(); // Oyun bitti sesini çal
@@ -293,7 +301,7 @@ function animate() {
       Math.abs(player.position.z - milkCarton.position.z) < 1
     ) {
       score += 10;
-      scoreBoard.innerText = `Score: ${score}`;
+      scoreBoard.innerText = `Skor: ${score}`;
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
       console.log("Collected a collectible! Score: " + score);
