@@ -1,4 +1,4 @@
-// Selecting DOM elements
+// DOM elemanlarını seçme
 const overlay = document.getElementById("overlay");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
 const scoreBoard = document.getElementById("scoreBoard");
@@ -6,38 +6,41 @@ const startButton = document.getElementById("startButton");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
 
-// Game variables
+// Oyun değişkenleri
 let scene, camera, renderer;
 let player = null;
-let mixer; // Not used anymore but kept for compatibility
-let animations; // Not used anymore but kept for compatibility
+let mixer; // Artık kullanılmıyor ama uyumluluk için tutuldu
+let animations; // Artık kullanılmıyor ama uyumluluk için tutuldu
 let clock = new THREE.Clock();
 let gameStarted = false;
 let gameOver = false;
 let score = 0;
 
-// Music variables
-let synth;
-let loop;
+// Ses değişkenleri
+let listener;
+let hitSound;
+let collectSound;
+let gameOverSound;
+let backgroundMusic;
 
-// Lane positions
+// Şerit pozisyonları
 const lanes = [-3, 0, 3];
 let currentLane = 1;
 
-// Arrays to hold objects
+// Nesneleri tutacak diziler
 const obstacles = [];
 const milkCartons = [];
 
 let spawnTimer = 0;
 const spawnInterval = 1;
 
-// Global variables for road lines
+// Yol çizgileri için global değişkenler
 let laneLines = [];
 const lineDashLength = 5;
 const lineGap = 5;
 const totalLineLength = 100;
 
-// Keyboard Controls
+// Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
 
@@ -63,7 +66,7 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Lighting
+  // Işıklandırma
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(5, 10, 7);
   scene.add(light);
@@ -71,7 +74,7 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Ground
+  // Zemin
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
     new THREE.MeshStandardMaterial({ color: 0x228B22 })
@@ -79,12 +82,13 @@ function init() {
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
   
-  // Create simple player, obstacles, and collectibles
+  // Oyuncu, engel ve toplanabilir nesneleri oluştur
   player = createPlayerModel();
   scene.add(player);
 
   createDashedLaneLines();
-  setupMusic();
+  setupSounds(); // Sesleri ayarla
+  setupBackgroundMusic(); // Arka plan müziğini ayarla
   animate();
 
   window.addEventListener("resize", () => {
@@ -94,37 +98,69 @@ function init() {
   });
 }
 
+function setupSounds() {
+  // Bir AudioListener oluştur ve kameraya ekle
+  listener = new THREE.AudioListener();
+  camera.add(listener);
+
+  // Çarpma sesi için ses kaynağı
+  hitSound = new THREE.Audio(listener);
+  const audioLoader = new THREE.AudioLoader();
+  // ** ÖNEMLİ: Buraya doğrudan .mp3 veya .wav ses dosyasının URL'sini yapıştırın **
+  audioLoader.load('https://pixabay.com/sound-effects/thud-291047/', function(buffer) {
+    hitSound.setBuffer(buffer);
+  });
+  
+  // Süt toplama sesi için ses kaynağı
+  collectSound = new THREE.Audio(listener);
+  audioLoader.load('https://pixabay.com/sound-effects/3-down-fast-1-106142/', function(buffer) {
+    collectSound.setBuffer(buffer);
+  });
+
+  // Oyun bitti sesi için ses kaynağı
+  gameOverSound = new THREE.Audio(listener);
+  audioLoader.load('https://pixabay.com/sound-effects/game-over-arcade-6435/', function(buffer) {
+    gameOverSound.setBuffer(buffer);
+  });
+}
+
+function setupBackgroundMusic() {
+    // Arka plan müziği için bir ses kaynağı oluştur
+    backgroundMusic = new THREE.Audio(listener);
+    const audioLoader = new THREE.AudioLoader();
+    // ** ÖNEMLİ: Buraya doğrudan .mp3 veya .wav müzik dosyasının URL'sini yapıştırın **
+    audioLoader.load('https://prosearch.tribeofnoise.com/artists/show/81095/42522', function(buffer) {
+      backgroundMusic.setBuffer(buffer);
+      backgroundMusic.setLoop(true); // Müziği sürekli döngüye al
+      backgroundMusic.setVolume(0.5); // Ses seviyesini ayarla
+    });
+}
+
 function createPlayerModel() {
+  // Model yükleme sorununu çözmek için basit geometrik şekil kullanıldı
   const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Blue cube
+  const material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Mavi küp
   const cube = new THREE.Mesh(geometry, material);
   cube.position.set(lanes[currentLane], 0.5, 0);
   return cube;
 }
 
 function createObstacleModel() {
+  // Model yükleme sorununu çözmek için basit geometrik şekil kullanıldı
   const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red cube
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Kırmızı küp
   const obstacle = new THREE.Mesh(geometry, material);
   obstacle.position.y = 0.5;
   return obstacle;
 }
 
 function createMilkCartonModel() {
+  // Model yükleme sorununu çözmek için basit geometrik şekil kullanıldı
   const geometry = new THREE.SphereGeometry(0.5, 32, 16);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffd700 }); // Gold sphere
+  const material = new THREE.MeshBasicMaterial({ color: 0xffd700 }); // Altın sarısı küre
   const collectible = new THREE.Mesh(geometry, material);
   collectible.position.y = 0.5;
   return collectible;
-}
-
-function setupMusic() {
-  synth = new Tone.Synth().toDestination();
-  const notes = ["C4", "E4", "G4", "A4", "G4", "E4"];
-  loop = new Tone.Sequence((time, note) => {
-    synth.triggerAttackRelease(note, "8n", time);
-  }, notes, "4n").start(0);
-  Tone.Transport.bpm.value = 120;
 }
 
 function createDashedLaneLines() {
@@ -150,8 +186,9 @@ function createDashedLaneLines() {
 
 startButton.addEventListener("click", () => {
   overlay.style.display = "none";
-  Tone.start();
-  Tone.Transport.start();
+  // Kullanıcı etkileşimi ile AudioContext'i başlat
+  listener.context.resume();
+  if (backgroundMusic.source) backgroundMusic.play(); // Oyunu başlatınca müziği çal
   startGame();
 });
 
@@ -197,7 +234,8 @@ function endGame() {
   gameStarted = false;
   finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
-  Tone.Transport.stop();
+  if (backgroundMusic.source) backgroundMusic.stop(); // Oyun bitince müziği durdur
+  if (gameOverSound.source) gameOverSound.play(); // Oyun bitti sesini çal
 }
 
 function animate() {
@@ -209,7 +247,7 @@ function animate() {
     player.position.x += (targetX - player.position.x) * 0.1;
   }
 
-  // Update line positions
+  // Yol çizgilerinin konumlarını güncelle
   const speed = 2 * 0.1;
   const totalSegmentLength = lineDashLength + lineGap;
   if (laneLines.length > 0) {
@@ -238,6 +276,7 @@ function animate() {
       Math.abs(player.position.z - obstacle.position.z) < 1.5
     ) {
       console.log("Game Over! Hit an obstacle.");
+      if (hitSound.source) hitSound.play(); // Ses yüklendiyse çal
       endGame();
     }
   }
@@ -258,6 +297,7 @@ function animate() {
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
       console.log("Collected a collectible! Score: " + score);
+      if (collectSound.source) collectSound.play(); // Ses yüklendiyse çal
     }
   }
 }
