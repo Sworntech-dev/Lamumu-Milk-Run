@@ -66,6 +66,45 @@
             text-shadow: 2px 2px 4px #000000;
             z-index: 5;
         }
+
+        /* Alt köşe imzalar */
+        .bottom-right, .bottom-left {
+            position: absolute;
+            bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.6em;
+        }
+
+        .bottom-right {
+            right: 10px;
+        }
+
+        .bottom-left {
+            left: 10px;
+        }
+
+        .bottom-right img, .bottom-left img {
+            width: 60px;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+
+        .bottom-left img {
+            border-radius: 10px; /* logo köşeli olabilir */
+            width: 70px;
+        }
+
+        .bottom-right a, .bottom-left a {
+            color: #1DA1F2;
+            font-size: 0.7em;
+            text-decoration: none;
+        }
+
+        .bottom-right a:hover, .bottom-left a:hover {
+            text-decoration: underline;
+        }
     </style>
     <!-- THREE.js and GLTFLoader libraries -->
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -77,12 +116,38 @@
     <div id="overlay">
         <h1>LAMUMU MILK RUN</h1>
         <button id="startButton">Start Game</button>
+
+        <!-- Sağ alt imza -->
+        <div class="bottom-right">
+            <img src="me.png" alt="My Photo">
+            <a href="https://twitter.com/seninhesabin" target="_blank">@seninhesabin</a>
+        </div>
+
+        <!-- Sol alt logo -->
+        <div class="bottom-left">
+            <img src="logo.png" alt="Project Logo">
+            <a href="https://twitter.com/projeninhesabi" target="_blank">@projeninhesabi</a>
+        </div>
     </div>
+
     <div id="gameOverOverlay" style="display: none;">
         <h1>Game Over!</h1>
         <p id="finalScoreText"></p>
         <button id="restartButton">Restart</button>
+
+        <!-- Sağ alt imza -->
+        <div class="bottom-right">
+            <img src="me.png" alt="My Photo">
+            <a href="https://x.com/sworntech" target="_blank">@sworntech</a>
+        </div>
+
+        <!-- Sol alt logo -->
+        <div class="bottom-left">
+            <img src="logo.png" alt="Project Logo">
+            <a href="https://x.com/lamumudotxyz" target="_blank">@lamumudotxyz</a>
+        </div>
     </div>
+
     <p id="scoreBoard">Score: 0</p>
     
     <!-- Include game.js file for game logic -->

@@ -1,0 +1,40 @@
+/* Sağ alttaki imza */
+#credits {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    text-align: center;
+    color: white;
+    font-size: 0.8em;
+    z-index: 20;
+}
+#credits img {
+    width: 60px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 5px;
+}
+#credits a {
+    color: #1DA1F2;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Sol alttaki logo */
+#logo {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    text-align: center;
+    z-index: 20;
+}
+#logo img {
+    width: 80px;
+    display: block;
+    margin: 0 auto 5px;
+}
+#logo a {
+    color: #1DA1F2;
+    text-decoration: none;
+    font-weight: bold;
+}
