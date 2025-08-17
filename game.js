@@ -9,19 +9,12 @@ const finalScoreText = document.getElementById("finalScoreText");
 // Oyun değişkenleri
 let scene, camera, renderer;
 let player = null;
-let mixer; // Artık kullanılmıyor ama uyumluluk için tutuldu
-let animations; // Artık kullanılmıyor ama uyumluluk için tutuldu
+let mixer;
+let animations;
 let clock = new THREE.Clock();
 let gameStarted = false;
 let gameOver = false;
 let score = 0;
-
-// Ses değişkenleri
-let listener;
-let hitSound;
-let collectSound;
-let gameOverSound;
-let backgroundMusic;
 
 // Şerit pozisyonları
 const lanes = [-3, 0, 3];
@@ -34,11 +27,15 @@ const milkCartons = [];
 let spawnTimer = 0;
 const spawnInterval = 1;
 
-// Yol çizgileri için global değişkenler
+// 3D modelleri
+let milkCartonModel;
+let obstacleModels = [];
+
+// Çizgiler için global değişkenler
 let laneLines = [];
-const lineDashLength = 5;
-const lineGap = 5;
-const totalLineLength = 100;
+const lineDashLength = 5; // Bir çizgi parçasının uzunluğu
+const lineGap = 5; // İki çizgi arasındaki boşluk
+const totalLineLength = 100; // Yolun toplam görsel uzunluğu
 
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
@@ -74,101 +71,24 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Zemin
+  // Zemin oluşturma
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
     new THREE.MeshStandardMaterial({ color: 0x228B22 })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
-  
-  // Oyuncu, engel ve toplanabilir nesneleri oluştur
-  player = createPlayerModel();
-  scene.add(player);
 
-  createDashedLaneLines();
-  setupSounds(); // Sesleri ayarla
-  setupBackgroundMusic(); // Arka plan müziğini ayarla
-  animate();
+  // Şerit çizgilerini init fonksiyonundan kaldırdık
+  // createDashedLaneLines();
+
+  loadModels();
 
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
-}
-
-function setupSounds() {
-  // Bir AudioListener oluştur ve kameraya ekle
-  listener = new THREE.AudioListener();
-  camera.add(listener);
-
-  // Çarpma sesi için ses kaynağı
-  hitSound = new THREE.Audio(listener);
-  const audioLoader = new THREE.AudioLoader();
-  // ** ÖNEMLİ: Buraya doğrudan .mp3 veya .wav ses dosyasının URL'sini yapıştırın **
-  audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', function(buffer) {
-    hitSound.setBuffer(buffer);
-  }, undefined, function(err) {
-    console.error('Çarpma sesi yüklenirken hata oluştu:', err);
-  });
-  
-  // Süt toplama sesi için ses kaynağı
-  collectSound = new THREE.Audio(listener);
-  audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', function(buffer) {
-    collectSound.setBuffer(buffer);
-  }, undefined, function(err) {
-    console.error('Süt toplama sesi yüklenirken hata oluştu:', err);
-  });
-
-  // Oyun bitti sesi için ses kaynağı - Yüklediğiniz dosyayı kullanıyoruz
-  gameOverSound = new THREE.Audio(listener);
-  audioLoader.load('uploaded:game-over-arcade-6435.mp3', function(buffer) {
-    gameOverSound.setBuffer(buffer);
-  }, undefined, function(err) {
-    console.error('Oyun bitti sesi yüklenirken hata oluştu:', err);
-  });
-}
-
-function setupBackgroundMusic() {
-    // Arka plan müziği için bir ses kaynağı oluştur
-    backgroundMusic = new THREE.Audio(listener);
-    const audioLoader = new THREE.AudioLoader();
-    // ** ÖNEMLİ: Buraya doğrudan .mp3 veya .wav müzik dosyasının URL'sini yapıştırın **
-    audioLoader.load('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', function(buffer) {
-      backgroundMusic.setBuffer(buffer);
-      backgroundMusic.setLoop(true); // Müziği sürekli döngüye al
-      backgroundMusic.setVolume(0.5); // Ses seviyesini ayarla
-    }, undefined, function(err) {
-      console.error('Arka plan müziği yüklenirken hata oluştu:', err);
-    });
-}
-
-function createPlayerModel() {
-  // Model yükleme sorununu çözmek için basit geometrik şekil kullanıldı
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Mavi küp
-  const cube = new THREE.Mesh(geometry, material);
-  cube.position.set(lanes[currentLane], 0.5, 0);
-  return cube;
-}
-
-function createObstacleModel() {
-  // Model yükleme sorununu çözmek için basit geometrik şekil kullanıldı
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Kırmızı küp
-  const obstacle = new THREE.Mesh(geometry, material);
-  obstacle.position.y = 0.5;
-  return obstacle;
-}
-
-function createMilkCartonModel() {
-  // Model yükleme sorununu çözmek için basit geometrik şekil kullanıldı
-  const geometry = new THREE.SphereGeometry(0.5, 32, 16);
-  const material = new THREE.MeshBasicMaterial({ color: 0xffd700 }); // Altın sarısı küre
-  const collectible = new THREE.Mesh(geometry, material);
-  collectible.position.y = 0.5;
-  return collectible;
 }
 
 function createDashedLaneLines() {
@@ -192,12 +112,70 @@ function createDashedLaneLines() {
   }
 }
 
+function loadModels() {
+  const loader = new THREE.GLTFLoader();
+  const modelsToLoad = [
+    { name: 'cow', path: 'dancing_cow.glb' },
+    { name: 'milkCarton', path: 'lowpoly_painted_milk_carton_-_realisticlow_poly.glb' },
+    { name: 'windmill', path: 'handpainted_windmill_tower.glb' },
+    { name: 'scarecrow', path: 'scarecrow_for_farm.glb' },
+    { name: 'hay_bales', path: 'hay_bales.glb' }
+  ];
+
+  let loadedCount = 0;
+
+  modelsToLoad.forEach(model => {
+    loader.load(
+      model.path,
+      (gltf) => {
+        const modelName = model.name;
+        gltf.scene.name = modelName;
+
+        if (model.name === 'cow') {
+          player = gltf.scene;
+          player.position.set(lanes[currentLane], 0, 0);
+          player.rotation.y = Math.PI;
+          player.scale.set(1, 1, 1);
+          scene.add(player);
+          animations = gltf.animations;
+          if (animations && animations.length) {
+            mixer = new THREE.AnimationMixer(player);
+          }
+        } else if (model.name === 'milkCarton') {
+          milkCartonModel = gltf.scene;
+        } else {
+          obstacleModels.push(gltf.scene);
+        }
+
+        loadedCount++;
+        if (loadedCount === modelsToLoad.length) {
+          animate();
+        }
+      },
+      (xhr) => {
+        console.log(`Model yükleniyor: ${model.name} ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
+      },
+      (error) => {
+        console.error(`Yükleme hatası: ${model.path} dosyası bulunamadı veya yüklenemedi.`, error);
+      }
+    );
+  });
+}
+
 startButton.addEventListener("click", () => {
   overlay.style.display = "none";
-  // Kullanıcı etkileşimi ile AudioContext'i başlat
-  listener.context.resume();
-  if (backgroundMusic.source) backgroundMusic.play(); // Oyunu başlatınca müziği çal
-  startGame();
+  const danceClip = animations.find(clip => clip.name === 'dance');
+  if (danceClip) {
+    const action = mixer.clipAction(danceClip);
+    action.setLoop(THREE.LoopOnce);
+    action.clampWhenFinished = true;
+    action.play();
+  }
+  setTimeout(() => {
+    // Dans animasyonu bittikten sonra çizgileri oluştur
+    createDashedLaneLines();
+    startGame();
+  }, 4000);
 });
 
 restartButton.addEventListener("click", () => {
@@ -205,17 +183,33 @@ restartButton.addEventListener("click", () => {
 });
 
 function createObstacle() {
+  if (obstacleModels.length === 0) return;
+  const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  const obstacle = createObstacleModel();
-  obstacle.position.set(lanes[laneIndex], obstacle.position.y, -50);
+  const obstaclePosition = new THREE.Vector3(lanes[laneIndex], 0, -50);
+  const obstacle = randomModel.clone();
+  obstacle.position.copy(obstaclePosition);
+  obstacle.rotation.y = Math.PI * 1.5;
+  if (randomModel.name === "windmill") {
+    obstacle.scale.set(1, 1, 1);
+    obstacle.position.y = 0;
+  } else if (randomModel.name === "scarecrow") {
+    obstacle.scale.set(1, 1, 1);
+    obstacle.position.y = 0;
+  } else if (randomModel.name === "hay_bales") {
+    obstacle.scale.set(1.5, 1.5, 1.5);
+    obstacle.position.y = 1.1;
+  }
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
 
 function createMilkCarton() {
+  if (!milkCartonModel) return;
+  const milkCarton = milkCartonModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  const milkCarton = createMilkCartonModel();
-  milkCarton.position.set(lanes[laneIndex], milkCarton.position.y, -50);
+  milkCarton.position.set(lanes[laneIndex], 0.5, -50);
+  milkCarton.scale.set(0.5, 0.5, 0.5);
   scene.add(milkCarton);
   milkCartons.push(milkCarton);
 }
@@ -229,10 +223,18 @@ function spawnObjects() {
 }
 
 function startGame() {
+  const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
+  if (walkProudClip) {
+    mixer.stopAllAction();
+    const action = mixer.clipAction(walkProudClip);
+    action.setLoop(THREE.LoopRepeat);
+    action.play();
+    mixer.timeScale = 2;
+  }
   score = 0;
   gameStarted = true;
   gameOver = false;
-  scoreBoard.innerText = `Skor: ${score}`;
+  scoreBoard.innerText = `Score: ${score}`;
   spawnObjects();
   setInterval(spawnObjects, 1000);
 }
@@ -240,33 +242,39 @@ function startGame() {
 function endGame() {
   gameOver = true;
   gameStarted = false;
-  finalScoreText.innerText = `Final Skor: ${score}`;
+  mixer.stopAllAction();
+  finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
-  if (backgroundMusic.source) backgroundMusic.stop(); // Oyun bitince müziği durdur
-  if (gameOverSound.source) gameOverSound.play(); // Oyun bitti sesini çal
 }
 
 function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
-
+  if (mixer) {
+    if (gameStarted) {
+      mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
+    }
+    mixer.update(delta);
+  }
   if (player && !gameOver) {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
-  }
 
-  // Yol çizgilerinin konumlarını güncelle
-  const speed = 2 * 0.1;
-  const totalSegmentLength = lineDashLength + lineGap;
-  if (laneLines.length > 0) {
-    laneLines.forEach(line => {
-      line.position.z += speed;
-      if (line.position.z > player.position.z + 5) {
-        line.position.z -= totalSegmentLength * (laneLines.length / 2);
-      }
-    });
+    // Kesikli çizgilerin hareketini ve döngüsünü yönetme
+    const speed = mixer.timeScale * 0.1;
+    const totalSegmentLength = lineDashLength + lineGap;
+    
+    // Yalnızca çizgiler oluşturulduysa döngüye devam et
+    if (laneLines.length > 0) {
+      laneLines.forEach(line => {
+        line.position.z += speed;
+        // Çizgi parçası oyuncunun görüş alanının önüne geçtiğinde onu arkaya taşı
+        if (line.position.z > player.position.z + 5) {
+          line.position.z -= totalSegmentLength * (laneLines.length / 2);
+        }
+      });
+    }
   }
-
   renderer.render(scene, camera);
   if (!gameStarted || gameOver) {
     return;
@@ -274,7 +282,7 @@ function animate() {
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
-    obstacle.position.z += speed;
+    obstacle.position.z += mixer.timeScale * 0.1;
     if (obstacle.position.z > 5) {
       scene.remove(obstacle);
       obstacles.splice(i, 1);
@@ -283,15 +291,13 @@ function animate() {
       Math.abs(player.position.x - obstacle.position.x) < 1 &&
       Math.abs(player.position.z - obstacle.position.z) < 1.5
     ) {
-      console.log("Game Over! Hit an obstacle.");
-      if (hitSound.source) hitSound.play(); // Ses yüklendiyse çal
+      console.log("Game Over! Engelle çarpıştı.");
       endGame();
     }
   }
-
   for (let i = milkCartons.length - 1; i >= 0; i--) {
     const milkCarton = milkCartons[i];
-    milkCarton.position.z += speed;
+    milkCarton.position.z += mixer.timeScale * 0.1;
     if (milkCarton.position.z > 5) {
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
@@ -301,11 +307,10 @@ function animate() {
       Math.abs(player.position.z - milkCarton.position.z) < 1
     ) {
       score += 10;
-      scoreBoard.innerText = `Skor: ${score}`;
+      scoreBoard.innerText = `Score: ${score}`;
       scene.remove(milkCarton);
       milkCartons.splice(i, 1);
-      console.log("Collected a collectible! Score: " + score);
-      if (collectSound.source) collectSound.play(); // Ses yüklendiyse çal
+      console.log("Süt toplandı! Skor: " + score);
     }
   }
 }
