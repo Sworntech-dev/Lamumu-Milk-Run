@@ -189,17 +189,19 @@ function createObstacle() {
   const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
   const laneIndex = Math.floor(Math.random() * lanes.length);
 
-  // Wrapper group kullanımı
-  const obstacleGroup = new THREE.Group();
-  const modelClone = randomModel.clone();
-  obstacleGroup.add(modelClone);
+  const obstacle = randomModel.clone();
 
-  obstacleGroup.position.set(lanes[laneIndex], randomModel.name === "hay_bales" ? 3.5 : 0, -50);
-  obstacleGroup.rotation.y = Math.PI * 1.5;
-  if (randomModel.name === "hay_bales") obstacleGroup.scale.set(1.5, 1.5, 1.5);
+  // --- BOUNDING BOX HİZALAMA FIXİ ---
+  const bbox = new THREE.Box3().setFromObject(obstacle);
+  const offsetY = -bbox.min.y; // alt kısmı zemine sabitle
+  obstacle.position.set(lanes[laneIndex], offsetY, -50);
+  obstacle.rotation.y = Math.PI * 1.5;
 
-  scene.add(obstacleGroup);
-  obstacles.push(obstacleGroup);
+  // Hay bales için ölçek ayarı
+  if (randomModel.name === "hay_bales") obstacle.scale.set(1.5, 1.5, 1.5);
+
+  scene.add(obstacle);
+  obstacles.push(obstacle);
 }
 
 function createMilkCarton() {
