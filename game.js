@@ -69,7 +69,7 @@ window.addEventListener("resize", () => {
 
 function init() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87ceeb);
+  scene.background = new THREE.Color(0x87ceeb); // siyah ekran sorunu için
 
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 3, 7);
@@ -167,7 +167,6 @@ function createObstacle() {
   const obstacle = randomModel.clone();
   obstacle.position.set(lanes[laneIndex], 0, -50);
   obstacle.rotation.y = Math.PI * 1.5;
-  if (randomModel.name === "hay_bales") { obstacle.scale.set(1.5, 1.5, 1.5); obstacle.position.y = 1.1; }
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
@@ -184,7 +183,7 @@ function createMilkCarton() {
 
 function spawnObjects() { Math.random() > 0.6 ? createMilkCarton() : createObstacle(); }
 
-// Oyun başlatma
+// Oyun başlatma (direkt zorluk seçildiğinde başlar)
 function startGame(difficulty) {
   switch(difficulty) {
     case 'easy': minSpeed = 2; maxSpeed = 4; break;
