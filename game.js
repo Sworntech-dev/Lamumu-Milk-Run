@@ -194,7 +194,7 @@ function createObstacle() {
   const modelClone = randomModel.clone();
   obstacleGroup.add(modelClone);
 
-  obstacleGroup.position.set(lanes[laneIndex], randomModel.name === "hay_bales" ? 1.5 : 0, -50);
+  obstacleGroup.position.set(lanes[laneIndex], randomModel.name === "hay_bales" ? 3.5 : 0, -50);
   obstacleGroup.rotation.y = Math.PI * 1.5;
   if (randomModel.name === "hay_bales") obstacleGroup.scale.set(1.5, 1.5, 1.5);
 
