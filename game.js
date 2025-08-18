@@ -4,7 +4,6 @@ const gameOverOverlay = document.getElementById("gameOverOverlay");
 const scoreBoard = document.getElementById("scoreBoard");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
-const difficultyButtons = document.querySelectorAll(".difficulty-btn");
 
 // Oyun değişkenleri
 let scene, camera, renderer;
@@ -32,9 +31,9 @@ let obstacleModels = [];
 
 // Çizgiler için global değişkenler
 let laneLines = [];
-const lineDashLength = 5; 
-const lineGap = 5; 
-const totalLineLength = 100; 
+const lineDashLength = 5;
+const lineGap = 5;
+const totalLineLength = 100;
 
 // Ses dosyaları
 const backgroundMusic = new Audio("sounds/background.mp3");
@@ -45,8 +44,9 @@ const collectSound = new Audio("sounds/collect.mp3");
 const hitSound = new Audio("sounds/hit.mp3");
 const gameOverSound = new Audio("sounds/gameover.mp3");
 
-// Hız değişkenleri
-let minSpeed = 2, maxSpeed = 4;
+// Zorluk seviyeleri
+let minSpeed = 2;
+let maxSpeed = 4;
 
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
@@ -69,7 +69,7 @@ window.addEventListener("resize", () => {
 
 function init() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87ceeb); // siyah ekran sorunu için
+  scene.background = new THREE.Color(0x87ceeb); // siyah ekran sorunu düzeltildi
 
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 3, 7);
@@ -97,7 +97,6 @@ function init() {
   loadModels();
 }
 
-// Çizgiler
 function createDashedLaneLines() {
   const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
   const lineDashGeometry = new THREE.BoxGeometry(0.1, 0.1, lineDashLength);
@@ -119,7 +118,6 @@ function createDashedLaneLines() {
   }
 }
 
-// Model yükleme
 function loadModels() {
   const loader = new THREE.GLTFLoader();
   const modelsToLoad = [
@@ -159,14 +157,41 @@ function loadModels() {
   });
 }
 
-// Obstacle ve milk carton
+// Zorluk seçimi ve direkt oyun başlatma
+document.querySelectorAll(".difficulty-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const difficulty = btn.dataset.difficulty;
+    if (difficulty === "easy") { minSpeed = 2; maxSpeed = 4; }
+    else if (difficulty === "medium") { minSpeed = 4; maxSpeed = 6; }
+    else if (difficulty === "hard") { minSpeed = 6; maxSpeed = 8; }
+
+    overlay.style.display = "none";
+
+    const danceClip = animations.find(clip => clip.name === 'dance');
+    if (danceClip) {
+      const action = mixer.clipAction(danceClip);
+      action.setLoop(THREE.LoopOnce);
+      action.clampWhenFinished = true;
+      action.play();
+    }
+
+    setTimeout(() => {
+      createDashedLaneLines();
+      startGame();
+    }, 4000);
+  });
+});
+
+restartButton.addEventListener("click", () => location.reload());
+
 function createObstacle() {
-  if (!obstacleModels.length) return;
+  if (obstacleModels.length === 0) return;
   const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
   const laneIndex = Math.floor(Math.random() * lanes.length);
   const obstacle = randomModel.clone();
-  obstacle.position.set(lanes[laneIndex], 0, -50);
+  obstacle.position.set(lanes[laneIndex], randomModel.name === "hay_bales" ? 1.1 : 0, -50);
   obstacle.rotation.y = Math.PI * 1.5;
+  if (randomModel.name === "hay_bales") obstacle.scale.set(1.5, 1.5, 1.5);
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
@@ -183,16 +208,7 @@ function createMilkCarton() {
 
 function spawnObjects() { Math.random() > 0.6 ? createMilkCarton() : createObstacle(); }
 
-// Oyun başlatma (direkt zorluk seçildiğinde başlar)
-function startGame(difficulty) {
-  switch(difficulty) {
-    case 'easy': minSpeed = 2; maxSpeed = 4; break;
-    case 'medium': minSpeed = 4; maxSpeed = 6; break;
-    case 'hard': minSpeed = 6; maxSpeed = 8; break;
-  }
-
-  overlay.style.display = "none";
-
+function startGame() {
   if (!animations) return;
   const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
   if (walkProudClip) {
@@ -214,7 +230,6 @@ function startGame(difficulty) {
   backgroundMusic.play();
 }
 
-// Game over
 function endGame() {
   gameOver = true;
   gameStarted = false;
@@ -227,13 +242,15 @@ function endGame() {
   gameOverSound.play();
 }
 
-// Animate
 function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
 
   if (mixer) {
-    if (gameStarted) mixer.timeScale = Math.min(maxSpeed, mixer.timeScale + delta * 0.05);
+    if (gameStarted) {
+      mixer.timeScale += delta * 0.05;
+      if (mixer.timeScale > maxSpeed) mixer.timeScale = maxSpeed;
+    }
     mixer.update(delta);
   }
 
@@ -254,7 +271,6 @@ function animate() {
 
   if (!gameStarted || gameOver) return;
 
-  // Obstacles
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
     obstacle.position.z += mixer.timeScale * 0.1;
@@ -265,7 +281,6 @@ function animate() {
     }
   }
 
-  // Milk Cartons
   for (let i = milkCartons.length - 1; i >= 0; i--) {
     const milkCarton = milkCartons[i];
     milkCarton.position.z += mixer.timeScale * 0.1;
@@ -278,14 +293,5 @@ function animate() {
     }
   }
 }
-
-difficultyButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    createDashedLaneLines();
-    startGame(btn.dataset.difficulty);
-  });
-});
-
-restartButton.addEventListener("click", () => location.reload());
 
 init();
