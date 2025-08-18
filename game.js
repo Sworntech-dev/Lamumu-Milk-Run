@@ -6,7 +6,6 @@ const startButton = document.getElementById("startButton");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
 
-// Oyun değişkenleri
 let scene, camera, renderer;
 let player = null;
 let mixer;
@@ -27,11 +26,9 @@ const milkCartons = [];
 let spawnTimer = 0;
 const spawnInterval = 1;
 
-// 3D modelleri
 let milkCartonModel;
 let obstacleModels = [];
 
-// Çizgiler için global değişkenler
 let laneLines = [];
 const lineDashLength = 5; 
 const lineGap = 5; 
@@ -46,15 +43,33 @@ const collectSound = new Audio("sounds/collect.mp3");
 const hitSound = new Audio("sounds/hit.mp3");
 const gameOverSound = new Audio("sounds/gameover.mp3");
 
+// Zorluk seviyesi değişkeni
+let difficulty = 'easy';
+let startSpeed = 2;
+let maxSpeed = 4;
+
+function selectDifficulty(level) {
+  difficulty = level;
+  if (level === 'easy') {
+    startSpeed = 2;
+    maxSpeed = 4;
+  } else if (level === 'medium') {
+    startSpeed = 4;
+    maxSpeed = 6;
+  } else if (level === 'hard') {
+    startSpeed = 6;
+    maxSpeed = 8;
+  }
+  startButton.disabled = false;
+}
+
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
 
-  // A / D ve ArrowLeft / ArrowRight desteği
   if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') {
     if (currentLane > 0) currentLane--;
-  } 
-  else if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') {
+  } else if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') {
     if (currentLane < lanes.length - 1) currentLane++;
   }
 });
@@ -78,7 +93,6 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Işıklandırma
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(5, 10, 7);
   scene.add(light);
@@ -86,7 +100,6 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Zemin
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 1000),
     new THREE.MeshStandardMaterial({ color: 0x228B22 })
@@ -225,7 +238,7 @@ function startGame() {
     const action = mixer.clipAction(walkProudClip);
     action.setLoop(THREE.LoopRepeat);
     action.play();
-    mixer.timeScale = 2;
+    mixer.timeScale = startSpeed; // zorluk başlangıç hızı
   }
   score = 0;
   gameStarted = true;
@@ -234,7 +247,6 @@ function startGame() {
   spawnObjects();
   setInterval(spawnObjects, 1000);
 
-  // Arka plan müziği
   backgroundMusic.currentTime = 0;
   backgroundMusic.play();
 }
@@ -246,7 +258,6 @@ function endGame() {
   finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
 
-  // Sesler
   backgroundMusic.pause();
   gameOverSound.currentTime = 0;
   gameOverSound.play();
@@ -256,7 +267,9 @@ function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
   if (mixer) {
-    if (gameStarted) mixer.timeScale = Math.min(4, mixer.timeScale + delta * 0.05);
+    if (gameStarted) {
+      mixer.timeScale = Math.min(maxSpeed, mixer.timeScale + delta * 0.05); // max hıza göre artış
+    }
     mixer.update(delta);
   }
 
@@ -281,7 +294,6 @@ function animate() {
 
   if (!gameStarted || gameOver) return;
 
-  // Obstacles
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obstacle = obstacles[i];
     obstacle.position.z += mixer.timeScale * 0.1;
@@ -299,7 +311,6 @@ function animate() {
     }
   }
 
-  // Milk Cartons
   for (let i = milkCartons.length - 1; i >= 0; i--) {
     const milkCarton = milkCartons[i];
     milkCarton.position.z += mixer.timeScale * 0.1;

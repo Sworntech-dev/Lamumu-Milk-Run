@@ -49,6 +49,7 @@
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s, background-color 0.2s;
+            margin: 5px;
         }
 
         button:hover {
@@ -92,7 +93,7 @@
         }
 
         .bottom-left img {
-            border-radius: 10px; /* logo köşeli olabilir */
+            border-radius: 10px; 
             width: 70px;
         }
 
@@ -106,26 +107,31 @@
             text-decoration: underline;
         }
     </style>
-    <!-- THREE.js and GLTFLoader libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <!-- Tone.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
     <div id="overlay">
         <h1>LAMUMU MILK RUN</h1>
-        <button id="startButton">Start Game</button>
+
+        <p>Select Difficulty:</p>
+        <div>
+            <button onclick="selectDifficulty('easy')">Easy</button>
+            <button onclick="selectDifficulty('medium')">Medium</button>
+            <button onclick="selectDifficulty('hard')">Hard</button>
+        </div>
+
+        <button id="startButton" disabled>Start Game</button>
 
         <!-- Sağ alt imza -->
         <div class="bottom-right">
-            <img src="me.png" alt="My Photo">
+            <img src="me.png" alt="Sworntech Photo">
             <a href="https://x.com/sworntech" target="_blank">@sworntech</a>
         </div>
 
         <!-- Sol alt logo -->
         <div class="bottom-left">
-            <img src="logo.png" alt="Project Logo">
+            <img src="logo.png" alt="Lamumudotxyz Logo">
             <a href="https://x.com/lamumudotxyz" target="_blank">@lamumudotxyz</a>
         </div>
     </div>
@@ -137,20 +143,19 @@
 
         <!-- Sağ alt imza -->
         <div class="bottom-right">
-            <img src="me.png" alt="My Photo">
+            <img src="me.png" alt="Sworntech Photo">
             <a href="https://x.com/sworntech" target="_blank">@sworntech</a>
         </div>
 
         <!-- Sol alt logo -->
         <div class="bottom-left">
-            <img src="logo.png" alt="Project Logo">
+            <img src="logo.png" alt="Lamumudotxyz Logo">
             <a href="https://x.com/lamumudotxyz" target="_blank">@lamumudotxyz</a>
         </div>
     </div>
 
     <p id="scoreBoard">Score: 0</p>
-    
-    <!-- Include game.js file for game logic -->
-    <script defer src="game.js"></script>
+
+    <script async src="game.js"></script>
 </body>
 </html>
