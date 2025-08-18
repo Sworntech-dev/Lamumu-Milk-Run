@@ -189,8 +189,8 @@ function createObstacle() {
   const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
   const laneIndex = Math.floor(Math.random() * lanes.length);
   const obstacle = randomModel.clone();
-  obstacle.position.set(lanes[laneIndex], randomModel.name === "hay_bales" ? 1.1 : 0, -50);
-  obstacle.rotation.y = Math.PI * 2.5;
+  obstacle.position.set(lanes[laneIndex], randomModel.name === "hay_bales" ? 1.5 : 0, -50);
+  obstacle.rotation.y = Math.PI * 1.5;
   if (randomModel.name === "hay_bales") obstacle.scale.set(1.5, 1.5, 1.5);
   scene.add(obstacle);
   obstacles.push(obstacle);
