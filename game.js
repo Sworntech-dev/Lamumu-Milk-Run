@@ -43,10 +43,16 @@ const milkCartons = [];
 const powerUps = [];
 
 // Billboard dizileri
-const billboards = [];
+const galleryPanelsLeft = [];
+const galleryPanelsRight = [];
 const billboardTextures = [];
 let billboardTexturesLoaded = false;
+const GALLERY_SPACING = 30;
+const GALLERY_COUNT_PER_SIDE = 12;
+const GALLERY_X_OFFSET = 12;
+const GALLERY_SIZE = { w: 8, h: 6 };
 
+// Spawn interval
 let spawnIntervalMs = 1000;
 
 // 3D modeller
@@ -98,6 +104,7 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// --- INIT ---
 function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87ceeb);
@@ -123,12 +130,11 @@ function init() {
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Billboard görsellerini preload et
   preloadBillboardTextures();
-
   loadModels();
 }
 
+// --- Lane çizgileri ---
 function createDashedLaneLines() {
   const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
   const lineDashGeometry = new THREE.BoxGeometry(0.1, 0.1, lineDashLength);
@@ -150,6 +156,7 @@ function createDashedLaneLines() {
   }
 }
 
+// --- MODEL LOAD ---
 function loadModels() {
   const loader = new THREE.GLTFLoader();
   const modelsToLoad = [
@@ -192,7 +199,7 @@ function loadModels() {
   });
 }
 
-// Billboard görsellerini preload
+// --- BILLBOARD PRELOAD ---
 function preloadBillboardTextures() {
   const texLoader = new THREE.TextureLoader();
   let loaded = 0;
@@ -200,75 +207,46 @@ function preloadBillboardTextures() {
     texLoader.load(
       `${i}.jpg`,
       (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding; // üç.js sürümlerine göre uyum
+        if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
         billboardTextures.push(tex);
         loaded++;
-        if (loaded === 10) billboardTexturesLoaded = true;
+        if (loaded === 10) setupGallery();
       },
       undefined,
       () => {
-        // Yüklenemeyen olursa yine de diziye boş geçmeyelim: tek renk fallback
-        const fallback = new THREE.CanvasTexture(document.createElement('canvas'));
-        billboardTextures.push(fallback);
+        const canvas = document.createElement('canvas');
+        canvas.width = 4; canvas.height = 4;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "#888"; ctx.fillRect(0,0,4,4);
+        billboardTextures.push(new THREE.CanvasTexture(canvas));
         loaded++;
-        if (loaded === 10) billboardTexturesLoaded = true;
+        if (loaded === 10) setupGallery();
       }
     );
   }
 }
 
-// Billboard oluştur
-function createBillboard() {
-  if (!billboardTexturesLoaded || billboardTextures.length === 0) return;
-
-  const geom = new THREE.PlaneGeometry(4, 3); // en-boy
-  const tex = billboardTextures[Math.floor(Math.random() * billboardTextures.length)];
-  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
-  const board = new THREE.Mesh(geom, mat);
-
-  const side = Math.random() < 0.5 ? -1 : 1; // sol/sağ
-  const x = side * 10; // yol dışı
-  const y = 2; // hafif yukarıda
-  const z = -60 - Math.random() * 20; // biraz ileri
-
-  board.position.set(x, y, z);
-  // Yola dönük hale getir
-  board.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-
-  // Hafif çeşitlilik için minik tilt
-  board.rotation.z = (Math.random() - 0.5) * 0.05;
-
-  scene.add(board);
-  billboards.push(board);
+// --- GALLERY SETUP ---
+function setupGallery() {
+  for (let i = 0; i < GALLERY_COUNT_PER_SIDE; i++) {
+    const z = -i * GALLERY_SPACING;
+    galleryPanelsLeft.push(createPanel(-GALLERY_X_OFFSET, z, Math.PI / 2));
+    galleryPanelsRight.push(createPanel(GALLERY_X_OFFSET, z, -Math.PI / 2));
+  }
 }
 
-// Zorluk seçimi ve oyun başlatma
-document.querySelectorAll(".difficulty-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const difficulty = btn.dataset.difficulty;
-    if (difficulty === "easy") { minSpeed = 2; maxSpeed = 4; }
-    else if (difficulty === "medium") { minSpeed = 4; maxSpeed = 6; }
-    else if (difficulty === "hard") { minSpeed = 6; maxSpeed = 8; }
+function createPanel(x, z, rotY) {
+  const geom = new THREE.PlaneGeometry(GALLERY_SIZE.w, GALLERY_SIZE.h);
+  const tex = billboardTextures[Math.floor(Math.random() * billboardTextures.length)];
+  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(x, GALLERY_SIZE.h / 2, z);
+  mesh.rotation.y = rotY;
+  scene.add(mesh);
+  return mesh;
+}
 
-    overlay.style.display = "none";
-
-    const danceClip = animations && animations.find(clip => clip.name === 'dance');
-    if (danceClip) {
-      const action = mixer.clipAction(danceClip);
-      action.setLoop(THREE.LoopOnce);
-      action.clampWhenFinished = true;
-      action.play();
-    }
-
-    setTimeout(() => {
-      createDashedLaneLines();
-      startGame();
-    }, 4000);
-  });
-});
-
-restartButton.addEventListener("click", () => location.reload());
-
+// --- SPAWN ---
 function createObstacle() {
   if (obstacleModels.length === 0) return;
   const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
@@ -291,13 +269,8 @@ function createMilkCarton(big = false) {
   const milkCarton = milkCartonModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
   milkCarton.position.set(lanes[laneIndex], 0.5, -50);
-  if (big) {
-    milkCarton.scale.set(1.0, 1.0, 1.0); // 2x (orijinali 0.5'ti)
-    milkCarton.userData.type = "bigMilk";
-  } else {
-    milkCarton.scale.set(0.5, 0.5, 0.5);
-    milkCarton.userData.type = "milk";
-  }
+  if (big) { milkCarton.scale.set(1.0, 1.0, 1.0); milkCarton.userData.type = "bigMilk"; }
+  else { milkCarton.scale.set(0.5, 0.5, 0.5); milkCarton.userData.type = "milk"; }
   scene.add(milkCarton);
   milkCartons.push(milkCarton);
 }
@@ -315,33 +288,17 @@ function createShield() {
 
 function spawnObjects() {
   const rand = Math.random();
-  if (rand < 0.05 && !shieldActive) {
-    createShield();
-  } else if (rand < 0.1) {
-    createMilkCarton(true); // big milk
-  } else if (rand < 0.4) {
-    createMilkCarton(false);
-  } else {
-    createObstacle();
-  }
-
-  // Billboardları da periyodik ve bol tekrar etmeyecek şekilde saç
-  if (Math.random() < 0.6) {
-    createBillboard();
-    if (Math.random() < 0.3) createBillboard(); // bazen çift taraflı
-  }
+  if (rand < 0.05 && !shieldActive) createShield();
+  else if (rand < 0.1) createMilkCarton(true);
+  else if (rand < 0.4) createMilkCarton(false);
+  else createObstacle();
 }
 
+// --- START GAME ---
 function startGame() {
   if (!animations) return;
   const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
-  if (walkProudClip) {
-    mixer.stopAllAction();
-    const action = mixer.clipAction(walkProudClip);
-    action.setLoop(THREE.LoopRepeat);
-    action.play();
-    mixer.timeScale = minSpeed;
-  }
+  if (walkProudClip) { mixer.stopAllAction(); mixer.clipAction(walkProudClip).play(); }
 
   score = 0;
   gameStarted = true;
@@ -349,39 +306,34 @@ function startGame() {
   scoreBoard.innerText = `Score: ${score}`;
   spawnObjects();
   setInterval(spawnObjects, spawnIntervalMs);
-
   backgroundMusic.currentTime = 0;
   backgroundMusic.play();
 }
 
+// --- END GAME ---
 function endGame() {
   gameOver = true;
   gameStarted = false;
   mixer.stopAllAction();
   finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
-
   backgroundMusic.pause();
   gameOverSound.currentTime = 0;
   gameOverSound.play();
 }
 
+// --- SHIELD ---
 function activateShield() {
   shieldActive = true;
   shieldTimeLeft = 10;
   shieldTimerUI.style.display = "flex";
   shieldTimerUI.innerText = shieldTimeLeft;
-
-  clearTimeout(shieldTimeout);
-  clearInterval(shieldTimerInterval);
-
+  clearTimeout(shieldTimeout); clearInterval(shieldTimerInterval);
   shieldTimeout = setTimeout(() => deactivateShield(), 10000);
   shieldTimerInterval = setInterval(() => {
     shieldTimeLeft--;
-    if (shieldTimeLeft <= 0) {
-      clearInterval(shieldTimerInterval);
-    }
     shieldTimerUI.innerText = shieldTimeLeft;
+    if (shieldTimeLeft <= 0) clearInterval(shieldTimerInterval);
   }, 1000);
 }
 
@@ -392,99 +344,72 @@ function deactivateShield() {
   clearInterval(shieldTimerInterval);
 }
 
+// --- ANIMATE ---
 function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
 
   if (mixer) {
-    if (gameStarted) {
-      mixer.timeScale += delta * 0.05;
-      if (mixer.timeScale > maxSpeed) mixer.timeScale = maxSpeed;
-    }
+    if (gameStarted) { mixer.timeScale += delta * 0.05; if (mixer.timeScale > maxSpeed) mixer.timeScale = maxSpeed; }
     mixer.update(delta);
   }
 
   if (player && !gameOver) {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
-
     const speed = mixer.timeScale * 0.1;
-    const totalSegmentLength = lineDashLength + lineGap;
 
     laneLines.forEach(line => {
       line.position.z += speed;
-      if (line.position.z > player.position.z + 5) line.position.z -= totalSegmentLength * (laneLines.length / 2);
+      if (line.position.z > player.position.z + 5) line.position.z -= (lineDashLength + lineGap) * (laneLines.length / 2);
     });
+
+    // Panel hareket
+    galleryPanelsLeft.forEach(p => { p.position.z += speed; if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING; });
+    galleryPanelsRight.forEach(p => { p.position.z += speed; if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING; });
+
+    // Obstacles
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const obstacle = obstacles[i];
+      obstacle.position.z += speed;
+      if (obstacle.position.z > 5) { scene.remove(obstacle); obstacles.splice(i, 1); }
+      if (Math.abs(player.position.x - obstacle.position.x) < 1 &&
+          Math.abs(player.position.z - obstacle.position.z) < 1.5) {
+        hitSound.currentTime = 0; hitSound.play();
+        if (shieldActive) { deactivateShield(); scene.remove(obstacle); obstacles.splice(i, 1); }
+        else { endGame(); }
+      }
+    }
+
+    // Milk cartons
+    for (let i = milkCartons.length - 1; i >= 0; i--) {
+      const milkCarton = milkCartons[i];
+      milkCarton.position.z += speed;
+      if (milkCarton.position.z > 5) { scene.remove(milkCarton); milkCartons.splice(i, 1); }
+      if (Math.abs(player.position.x - milkCarton.position.x) < 1 &&
+          Math.abs(player.position.z - milkCarton.position.z) < 1) {
+        score += milkCarton.userData.type === "bigMilk" ? 200 : 10;
+        scoreBoard.innerText = `Score: ${score}`;
+        scene.remove(milkCarton); milkCartons.splice(i, 1);
+        collectSound.currentTime = 0; collectSound.play();
+      }
+    }
+
+    // Power-ups
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+      const powerUp = powerUps[i];
+      powerUp.position.z += speed;
+      if (powerUp.position.z > 5) { scene.remove(powerUp); powerUps.splice(i, 1); }
+      if (Math.abs(player.position.x - powerUp.position.x) < 1 &&
+          Math.abs(player.position.z - powerUp.position.z) < 1) {
+        if (powerUp.userData.type === "shield") activateShield();
+        scene.remove(powerUp); powerUps.splice(i, 1);
+        collectSound.currentTime = 0; collectSound.play();
+      }
+    }
   }
 
   renderer.render(scene, camera);
-
-  if (!gameStarted || gameOver) return;
-
-  // Obstacles
-  for (let i = obstacles.length - 1; i >= 0; i--) {
-    const obstacle = obstacles[i];
-    obstacle.position.z += mixer.timeScale * 0.1;
-    if (obstacle.position.z > 5) { scene.remove(obstacle); obstacles.splice(i, 1); }
-    if (Math.abs(player.position.x - obstacle.position.x) < 1 &&
-        Math.abs(player.position.z - obstacle.position.z) < 1.5) {
-      hitSound.currentTime = 0; hitSound.play();
-      if (shieldActive) {
-        deactivateShield();
-        scene.remove(obstacle);
-        obstacles.splice(i, 1);
-      } else {
-        endGame();
-      }
-    }
-  }
-
-  // Milk cartons
-  for (let i = milkCartons.length - 1; i >= 0; i--) {
-    const milkCarton = milkCartons[i];
-    milkCarton.position.z += mixer.timeScale * 0.1;
-    if (milkCarton.position.z > 5) { scene.remove(milkCarton); milkCartons.splice(i, 1); }
-    if (Math.abs(player.position.x - milkCarton.position.x) < 1 &&
-        Math.abs(player.position.z - milkCarton.position.z) < 1) {
-      if (milkCarton.userData.type === "bigMilk") {
-        score += 200;
-      } else {
-        score += 10;
-      }
-      scoreBoard.innerText = `Score: ${score}`;
-      scene.remove(milkCarton); milkCartons.splice(i, 1);
-      collectSound.currentTime = 0; collectSound.play();
-    }
-  }
-
-  // Power-ups (shield)
-  for (let i = powerUps.length - 1; i >= 0; i--) {
-    const powerUp = powerUps[i];
-    powerUp.position.z += mixer.timeScale * 0.1;
-    if (powerUp.position.z > 5) { scene.remove(powerUp); powerUps.splice(i, 1); }
-    if (Math.abs(player.position.x - powerUp.position.x) < 1 &&
-        Math.abs(player.position.z - powerUp.position.z) < 1) {
-      if (powerUp.userData.type === "shield") {
-        activateShield();
-      }
-      scene.remove(powerUp);
-      powerUps.splice(i, 1);
-      collectSound.currentTime = 0; collectSound.play();
-    }
-  }
-
-  // Billboard hareket / temizlik
-  for (let i = billboards.length - 1; i >= 0; i--) {
-    const b = billboards[i];
-    b.position.z += mixer.timeScale * 0.1;
-    if (b.position.z > 12) {
-      scene.remove(b);
-      if (b.material && b.material.map) b.material.map.dispose?.();
-      b.material.dispose?.();
-      b.geometry.dispose?.();
-      billboards.splice(i, 1);
-    }
-  }
 }
 
 init();
