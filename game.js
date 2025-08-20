@@ -27,7 +27,7 @@ document.body.appendChild(shieldTimerUI);
 let scene, camera, renderer;
 let player = null;
 let mixer;
-let animations;
+let animations = [];
 let clock = new THREE.Clock();
 let gameStarted = false;
 let gameOver = false;
@@ -42,7 +42,7 @@ const obstacles = [];
 const milkCartons = [];
 const powerUps = [];
 
-// Billboard dizileri
+// Billboard/panel galerisi dizileri
 const galleryPanelsLeft = [];
 const galleryPanelsRight = [];
 const billboardTextures = [];
@@ -66,7 +66,7 @@ let shieldTimeout = null;
 let shieldTimerInterval = null;
 let shieldTimeLeft = 0;
 
-// Çizgiler için global değişkenler
+// Lane çizgileri
 let laneLines = [];
 const lineDashLength = 5;
 const lineGap = 5;
@@ -88,7 +88,6 @@ let maxSpeed = 4;
 // Klavye Kontrolleri
 window.addEventListener('keydown', (event) => {
   if (!gameStarted || gameOver) return;
-
   if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') {
     if (currentLane > 0) currentLane--;
   } else if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') {
@@ -96,7 +95,7 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-// window resize bug fix
+// window resize fix
 window.addEventListener("resize", () => {
   if (!camera || !renderer) return;
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -191,7 +190,12 @@ function loadModels() {
         }
 
         loadedCount++;
-        if (loadedCount === modelsToLoad.length) animate();
+        if (loadedCount === modelsToLoad.length) {
+          if (animations && animations.length === 0) {
+            console.warn("Animasyon bulunamadı, oyun yine de başlatılacak.");
+          }
+          animate();
+        }
       },
       undefined,
       (error) => console.error(`Yükleme hatası: ${model.path}`, error)
@@ -257,9 +261,6 @@ function createObstacle() {
   const offsetY = -bbox.min.y;
   obstacle.position.set(lanes[laneIndex], offsetY, -50);
   obstacle.rotation.y = Math.PI * 1.5;
-
-  if (randomModel.name === "hay_bales") obstacle.scale.set(1.5, 1.5, 1.5);
-
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
@@ -269,8 +270,8 @@ function createMilkCarton(big = false) {
   const milkCarton = milkCartonModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
   milkCarton.position.set(lanes[laneIndex], 0.5, -50);
-  if (big) { milkCarton.scale.set(1.0, 1.0, 1.0); milkCarton.userData.type = "bigMilk"; }
-  else { milkCarton.scale.set(0.5, 0.5, 0.5); milkCarton.userData.type = "milk"; }
+  milkCarton.scale.set(big ? 1 : 0.5, big ? 1 : 0.5, big ? 1 : 0.5);
+  milkCarton.userData.type = big ? "bigMilk" : "milk";
   scene.add(milkCarton);
   milkCartons.push(milkCarton);
 }
@@ -295,10 +296,45 @@ function spawnObjects() {
 }
 
 // --- START GAME ---
+document.querySelectorAll(".difficulty-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const diff = btn.dataset.difficulty;
+    if (diff === "easy") { minSpeed = 2; maxSpeed = 4; }
+    else if (diff === "medium") { minSpeed = 4; maxSpeed = 6; }
+    else if (diff === "hard") { minSpeed = 6; maxSpeed = 8; }
+
+    overlay.style.display = "none";
+
+    if (animations && animations.length) {
+      const danceClip = animations.find(c => c.name === 'dance');
+      if (danceClip) {
+        const action = mixer.clipAction(danceClip);
+        action.setLoop(THREE.LoopOnce);
+        action.clampWhenFinished = true;
+        action.play();
+      }
+    }
+
+    setTimeout(() => {
+      createDashedLaneLines();
+      startGame();
+    }, 1000);
+  });
+});
+
+restartButton.addEventListener("click", () => location.reload());
+
 function startGame() {
-  if (!animations) return;
-  const walkProudClip = animations.find(clip => clip.name === 'walk_proud');
-  if (walkProudClip) { mixer.stopAllAction(); mixer.clipAction(walkProudClip).play(); }
+  if (animations && animations.length) {
+    const walkClip = animations.find(c => c.name === 'walk_proud');
+    if (walkClip) {
+      mixer.stopAllAction();
+      const action = mixer.clipAction(walkClip);
+      action.setLoop(THREE.LoopRepeat);
+      action.play();
+      mixer.timeScale = minSpeed;
+    }
+  }
 
   score = 0;
   gameStarted = true;
@@ -314,7 +350,7 @@ function startGame() {
 function endGame() {
   gameOver = true;
   gameStarted = false;
-  mixer.stopAllAction();
+  if (mixer) mixer.stopAllAction();
   finalScoreText.innerText = `Final Score: ${score}`;
   gameOverOverlay.style.display = "flex";
   backgroundMusic.pause();
@@ -350,25 +386,32 @@ function animate() {
   const delta = clock.getDelta();
 
   if (mixer) {
-    if (gameStarted) { mixer.timeScale += delta * 0.05; if (mixer.timeScale > maxSpeed) mixer.timeScale = maxSpeed; }
+    if (gameStarted) {
+      mixer.timeScale += delta * 0.05;
+      if (mixer.timeScale > maxSpeed) mixer.timeScale = maxSpeed;
+    }
     mixer.update(delta);
   }
 
   if (player && !gameOver) {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
-    const speed = mixer.timeScale * 0.1;
+    const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
 
     laneLines.forEach(line => {
       line.position.z += speed;
       if (line.position.z > player.position.z + 5) line.position.z -= (lineDashLength + lineGap) * (laneLines.length / 2);
     });
 
-    // Panel hareket
-    galleryPanelsLeft.forEach(p => { p.position.z += speed; if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING; });
-    galleryPanelsRight.forEach(p => { p.position.z += speed; if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING; });
+    galleryPanelsLeft.forEach(p => {
+      p.position.z += speed;
+      if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
+    });
+    galleryPanelsRight.forEach(p => {
+      p.position.z += speed;
+      if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
+    });
 
-    // Obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obstacle = obstacles[i];
       obstacle.position.z += speed;
@@ -381,7 +424,6 @@ function animate() {
       }
     }
 
-    // Milk cartons
     for (let i = milkCartons.length - 1; i >= 0; i--) {
       const milkCarton = milkCartons[i];
       milkCarton.position.z += speed;
@@ -395,7 +437,6 @@ function animate() {
       }
     }
 
-    // Power-ups
     for (let i = powerUps.length - 1; i >= 0; i--) {
       const powerUp = powerUps[i];
       powerUp.position.z += speed;
