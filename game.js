@@ -190,12 +190,7 @@ function loadModels() {
         }
 
         loadedCount++;
-        if (loadedCount === modelsToLoad.length) {
-          if (animations && animations.length === 0) {
-            console.warn("Animasyon bulunamadı, oyun yine de başlatılacak.");
-          }
-          animate();
-        }
+        if (loadedCount === modelsToLoad.length) animate();
       },
       undefined,
       (error) => console.error(`Yükleme hatası: ${model.path}`, error)
@@ -312,13 +307,27 @@ document.querySelectorAll(".difficulty-btn").forEach(btn => {
         action.setLoop(THREE.LoopOnce);
         action.clampWhenFinished = true;
         action.play();
-      }
-    }
 
-    setTimeout(() => {
+        action.onFinished = () => {
+          createDashedLaneLines();
+          startGame();
+        };
+
+        setTimeout(() => {
+          // Eğer onFinished tetiklenmezse 2 saniye sonra zorla başlat
+          if (!gameStarted) {
+            createDashedLaneLines();
+            startGame();
+          }
+        }, 2000);
+      } else {
+        createDashedLaneLines();
+        startGame();
+      }
+    } else {
       createDashedLaneLines();
       startGame();
-    }, 1000);
+    }
   });
 });
 
@@ -393,7 +402,7 @@ function animate() {
     mixer.update(delta);
   }
 
-  if (player && !gameOver) {
+  if (player && gameStarted && !gameOver) {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
     const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
