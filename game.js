@@ -42,6 +42,11 @@ const obstacles = [];
 const milkCartons = [];
 const powerUps = [];
 
+// Billboard dizileri
+const billboards = [];
+const billboardTextures = [];
+let billboardTexturesLoaded = false;
+
 let spawnIntervalMs = 1000;
 
 // 3D modeller
@@ -118,6 +123,9 @@ function init() {
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
+  // Billboard görsellerini preload et
+  preloadBillboardTextures();
+
   loadModels();
 }
 
@@ -184,6 +192,56 @@ function loadModels() {
   });
 }
 
+// Billboard görsellerini preload
+function preloadBillboardTextures() {
+  const texLoader = new THREE.TextureLoader();
+  let loaded = 0;
+  for (let i = 1; i <= 10; i++) {
+    texLoader.load(
+      `${i}.jpg`,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding; // üç.js sürümlerine göre uyum
+        billboardTextures.push(tex);
+        loaded++;
+        if (loaded === 10) billboardTexturesLoaded = true;
+      },
+      undefined,
+      () => {
+        // Yüklenemeyen olursa yine de diziye boş geçmeyelim: tek renk fallback
+        const fallback = new THREE.CanvasTexture(document.createElement('canvas'));
+        billboardTextures.push(fallback);
+        loaded++;
+        if (loaded === 10) billboardTexturesLoaded = true;
+      }
+    );
+  }
+}
+
+// Billboard oluştur
+function createBillboard() {
+  if (!billboardTexturesLoaded || billboardTextures.length === 0) return;
+
+  const geom = new THREE.PlaneGeometry(4, 3); // en-boy
+  const tex = billboardTextures[Math.floor(Math.random() * billboardTextures.length)];
+  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+  const board = new THREE.Mesh(geom, mat);
+
+  const side = Math.random() < 0.5 ? -1 : 1; // sol/sağ
+  const x = side * 10; // yol dışı
+  const y = 2; // hafif yukarıda
+  const z = -60 - Math.random() * 20; // biraz ileri
+
+  board.position.set(x, y, z);
+  // Yola dönük hale getir
+  board.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+
+  // Hafif çeşitlilik için minik tilt
+  board.rotation.z = (Math.random() - 0.5) * 0.05;
+
+  scene.add(board);
+  billboards.push(board);
+}
+
 // Zorluk seçimi ve oyun başlatma
 document.querySelectorAll(".difficulty-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -194,7 +252,7 @@ document.querySelectorAll(".difficulty-btn").forEach(btn => {
 
     overlay.style.display = "none";
 
-    const danceClip = animations.find(clip => clip.name === 'dance');
+    const danceClip = animations && animations.find(clip => clip.name === 'dance');
     if (danceClip) {
       const action = mixer.clipAction(danceClip);
       action.setLoop(THREE.LoopOnce);
@@ -234,7 +292,7 @@ function createMilkCarton(big = false) {
   const laneIndex = Math.floor(Math.random() * lanes.length);
   milkCarton.position.set(lanes[laneIndex], 0.5, -50);
   if (big) {
-    milkCarton.scale.set(1.0, 1.0, 1.0);
+    milkCarton.scale.set(1.0, 1.0, 1.0); // 2x (orijinali 0.5'ti)
     milkCarton.userData.type = "bigMilk";
   } else {
     milkCarton.scale.set(0.5, 0.5, 0.5);
@@ -265,6 +323,12 @@ function spawnObjects() {
     createMilkCarton(false);
   } else {
     createObstacle();
+  }
+
+  // Billboardları da periyodik ve bol tekrar etmeyecek şekilde saç
+  if (Math.random() < 0.6) {
+    createBillboard();
+    if (Math.random() < 0.3) createBillboard(); // bazen çift taraflı
   }
 }
 
@@ -307,6 +371,9 @@ function activateShield() {
   shieldTimeLeft = 10;
   shieldTimerUI.style.display = "flex";
   shieldTimerUI.innerText = shieldTimeLeft;
+
+  clearTimeout(shieldTimeout);
+  clearInterval(shieldTimerInterval);
 
   shieldTimeout = setTimeout(() => deactivateShield(), 10000);
   shieldTimerInterval = setInterval(() => {
@@ -403,6 +470,19 @@ function animate() {
       scene.remove(powerUp);
       powerUps.splice(i, 1);
       collectSound.currentTime = 0; collectSound.play();
+    }
+  }
+
+  // Billboard hareket / temizlik
+  for (let i = billboards.length - 1; i >= 0; i--) {
+    const b = billboards[i];
+    b.position.z += mixer.timeScale * 0.1;
+    if (b.position.z > 12) {
+      scene.remove(b);
+      if (b.material && b.material.map) b.material.map.dispose?.();
+      b.material.dispose?.();
+      b.geometry.dispose?.();
+      billboards.splice(i, 1);
     }
   }
 }
