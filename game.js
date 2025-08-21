@@ -129,6 +129,7 @@ function init() {
   groundTexture.wrapS = THREE.RepeatWrapping;
   groundTexture.wrapT = THREE.RepeatWrapping;
   groundTexture.repeat.set(4, 200); // genişlik ve uzunluk tekrar oranı
+  groundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
   const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
   ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMaterial);
@@ -413,7 +414,7 @@ function animate() {
     player.position.x += (targetX - player.position.x) * 0.1;
     const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
 
-    // Zemin hareket efekti
+    // ✅ Zemin hareket efekti
     if (groundTexture) {
       groundTexture.offset.y -= speed * 0.02;
     }
