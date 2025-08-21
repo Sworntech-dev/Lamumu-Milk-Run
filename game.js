@@ -46,7 +46,6 @@ const powerUps = [];
 const galleryPanelsLeft = [];
 const galleryPanelsRight = [];
 const billboardTextures = [];
-let billboardTexturesLoaded = false;
 const GALLERY_SPACING = 30;
 const GALLERY_COUNT_PER_SIDE = 12;
 const GALLERY_X_OFFSET = 12;
@@ -76,7 +75,6 @@ const totalLineLength = 100;
 const backgroundMusic = new Audio("sounds/background.mp3");
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.5;
-
 const collectSound = new Audio("sounds/collect.mp3");
 const hitSound = new Audio("sounds/hit.mp3");
 const gameOverSound = new Audio("sounds/gameover.mp3");
@@ -123,11 +121,12 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
+  // Zemin için grass.jpg dokusu
   const texLoader = new THREE.TextureLoader();
   groundTexture = texLoader.load("grass.jpg");
   groundTexture.wrapS = THREE.RepeatWrapping;
   groundTexture.wrapT = THREE.RepeatWrapping;
-  groundTexture.repeat.set(4, 1); // sadece x tekrar, z sabit
+  groundTexture.repeat.set(4, 4);
 
   const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
   ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMaterial);
@@ -212,6 +211,7 @@ function preloadBillboardTextures() {
     texLoader.load(
       `${i}.jpg`,
       (tex) => {
+        if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
         billboardTextures.push(tex);
         loaded++;
         if (loaded === 10) setupGallery();
@@ -259,7 +259,7 @@ function createObstacle() {
   const obstacle = randomModel.clone();
   const bbox = new THREE.Box3().setFromObject(obstacle);
   const offsetY = -bbox.min.y;
-  obstacle.position.set(lanes[laneIndex], offsetY, player.position.z - 50); // player önünde spawn
+  obstacle.position.set(lanes[laneIndex], offsetY, player.position.z - 50);
   obstacle.rotation.y = Math.PI * 1.5;
   scene.add(obstacle);
   obstacles.push(obstacle);
@@ -269,7 +269,7 @@ function createMilkCarton(big = false) {
   if (!milkCartonModel) return;
   const milkCarton = milkCartonModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  milkCarton.position.set(lanes[laneIndex], 0.5, player.position.z - 50); // player önünde spawn
+  milkCarton.position.set(lanes[laneIndex], 0.5, player.position.z - 50);
   milkCarton.scale.set(big ? 1 : 0.5, big ? 1 : 0.5, big ? 1 : 0.5);
   milkCarton.userData.type = big ? "bigMilk" : "milk";
   scene.add(milkCarton);
@@ -280,7 +280,7 @@ function createShield() {
   if (!shieldModel || shieldActive) return;
   const shield = shieldModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  shield.position.set(lanes[laneIndex], 0.5, player.position.z - 50); // player önünde spawn
+  shield.position.set(lanes[laneIndex], 0.5, player.position.z - 50);
   shield.scale.set(0.7, 0.7, 0.7);
   shield.userData.type = "shield";
   scene.add(shield);
@@ -407,54 +407,34 @@ function animate() {
   }
 
   if (player && gameStarted && !gameOver) {
-    // Lane geçiş
+    // Player ilerliyor
+    const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
+    player.position.z -= speed; // negatif z yönü ile ileri hareket
+
+    // Player x pozisyonu için şerit geçişi
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
 
-    const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
-
-    // Kamera/player ilerliyor hissi
+    // Kamera player’i takip ediyor
     camera.position.z = player.position.z + 7;
-    camera.lookAt(player.position);
+    camera.position.x = player.position.x;
+    camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
 
-    player.position.z -= speed; // ileri hareket
-
-    // Lane çizgileri
-    laneLines.forEach(line => {
-      line.position.z -= speed;
-      if (line.position.z < player.position.z - 50) line.position.z += (lineDashLength + lineGap) * (laneLines.length / 2);
-    });
-
-    // Gallery paneller
-    galleryPanelsLeft.forEach(p => {
-      p.position.z -= speed;
-      if (p.position.z < player.position.z - 50) p.position.z += GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
-    });
-    galleryPanelsRight.forEach(p => {
-      p.position.z -= speed;
-      if (p.position.z < player.position.z - 50) p.position.z += GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
-    });
-
-    // Obstacles
+    // Objeler player'e göre spawn olmuş durumda zaten, update sadece collision
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obstacle = obstacles[i];
-      obstacle.position.z -= speed;
-      if (obstacle.position.z > player.position.z + 5) { scene.remove(obstacle); obstacles.splice(i, 1); }
-      if (Math.abs(player.position.x - obstacle.position.x) < 1 &&
-          Math.abs(player.position.z - obstacle.position.z) < 1.5) {
+      if (player.position.z - obstacle.position.z < 1.5 &&
+          Math.abs(player.position.x - obstacle.position.x) < 1) {
         hitSound.currentTime = 0; hitSound.play();
         if (shieldActive) { deactivateShield(); scene.remove(obstacle); obstacles.splice(i, 1); }
         else { endGame(); }
       }
     }
 
-    // MilkCartons
     for (let i = milkCartons.length - 1; i >= 0; i--) {
       const milkCarton = milkCartons[i];
-      milkCarton.position.z -= speed;
-      if (milkCarton.position.z > player.position.z + 5) { scene.remove(milkCarton); milkCartons.splice(i, 1); }
-      if (Math.abs(player.position.x - milkCarton.position.x) < 1 &&
-          Math.abs(player.position.z - milkCarton.position.z) < 1) {
+      if (player.position.z - milkCarton.position.z < 1.5 &&
+          Math.abs(player.position.x - milkCarton.position.x) < 1) {
         score += milkCarton.userData.type === "bigMilk" ? 200 : 10;
         scoreBoard.innerText = `Score: ${score}`;
         scene.remove(milkCarton); milkCartons.splice(i, 1);
@@ -462,13 +442,10 @@ function animate() {
       }
     }
 
-    // PowerUps
     for (let i = powerUps.length - 1; i >= 0; i--) {
       const powerUp = powerUps[i];
-      powerUp.position.z -= speed;
-      if (powerUp.position.z > player.position.z + 5) { scene.remove(powerUp); powerUps.splice(i, 1); }
-      if (Math.abs(player.position.x - powerUp.position.x) < 1 &&
-          Math.abs(player.position.z - powerUp.position.z) < 1) {
+      if (player.position.z - powerUp.position.z < 1.5 &&
+          Math.abs(player.position.x - powerUp.position.x) < 1) {
         if (powerUp.userData.type === "shield") activateShield();
         scene.remove(powerUp); powerUps.splice(i, 1);
         collectSound.currentTime = 0; collectSound.play();
