@@ -350,7 +350,7 @@ function animate(){
         speed = mixer ? mixer.timeScale*0.1 : minSpeed*0.1;
 
         // Zemin kaydır
-        groundTexture.offset.y -= speed*0.2;
+        groundTexture.offset.y += speed*0.2;
 
         laneLines.forEach(line=>{
             line.position.z += speed;
