@@ -123,13 +123,11 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Zemin için grass.jpg dokusu
   const texLoader = new THREE.TextureLoader();
   groundTexture = texLoader.load("grass.jpg");
   groundTexture.wrapS = THREE.RepeatWrapping;
   groundTexture.wrapT = THREE.RepeatWrapping;
-  groundTexture.repeat.set(4, 200); // genişlik ve uzunluk tekrar oranı
-  groundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  groundTexture.repeat.set(4, 200);
 
   const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
   ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMaterial);
@@ -214,7 +212,6 @@ function preloadBillboardTextures() {
     texLoader.load(
       `${i}.jpg`,
       (tex) => {
-        if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
         billboardTextures.push(tex);
         loaded++;
         if (loaded === 10) setupGallery();
@@ -414,16 +411,13 @@ function animate() {
     player.position.x += (targetX - player.position.x) * 0.1;
     const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
 
-    // ✅ Zemin hareket efekti
-    if (groundTexture) {
-      groundTexture.offset.y -= speed * 0.02;
-    }
-
+    // Lane çizgileri
     laneLines.forEach(line => {
       line.position.z += speed;
       if (line.position.z > player.position.z + 5) line.position.z -= (lineDashLength + lineGap) * (laneLines.length / 2);
     });
 
+    // Gallery paneller
     galleryPanelsLeft.forEach(p => {
       p.position.z += speed;
       if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
@@ -433,6 +427,7 @@ function animate() {
       if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
     });
 
+    // Obstacle çarpışma kontrolü
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obstacle = obstacles[i];
       obstacle.position.z += speed;
@@ -445,6 +440,7 @@ function animate() {
       }
     }
 
+    // MilkCarton çarpışma
     for (let i = milkCartons.length - 1; i >= 0; i--) {
       const milkCarton = milkCartons[i];
       milkCarton.position.z += speed;
@@ -458,6 +454,7 @@ function animate() {
       }
     }
 
+    // PowerUp çarpışma
     for (let i = powerUps.length - 1; i >= 0; i--) {
       const powerUp = powerUps[i];
       powerUp.position.z += speed;
