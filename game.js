@@ -46,6 +46,7 @@ const powerUps = [];
 const galleryPanelsLeft = [];
 const galleryPanelsRight = [];
 const billboardTextures = [];
+let billboardTexturesLoaded = false;
 const GALLERY_SPACING = 30;
 const GALLERY_COUNT_PER_SIDE = 12;
 const GALLERY_X_OFFSET = 12;
@@ -71,10 +72,14 @@ const lineDashLength = 5;
 const lineGap = 5;
 const totalLineLength = 100;
 
+// Zemin
+let ground, groundTexture;
+
 // Ses dosyaları
 const backgroundMusic = new Audio("sounds/background.mp3");
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.5;
+
 const collectSound = new Audio("sounds/collect.mp3");
 const hitSound = new Audio("sounds/hit.mp3");
 const gameOverSound = new Audio("sounds/gameover.mp3");
@@ -102,7 +107,6 @@ window.addEventListener("resize", () => {
 });
 
 // --- INIT ---
-let ground, groundTexture;
 function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87ceeb);
@@ -121,15 +125,17 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  // Zemin için grass.jpg dokusu
-  const texLoader = new THREE.TextureLoader();
-  groundTexture = texLoader.load("grass.jpg");
+  // Grass texture zemin
+  const loader = new THREE.TextureLoader();
+  groundTexture = loader.load('grass.jpg');
   groundTexture.wrapS = THREE.RepeatWrapping;
   groundTexture.wrapT = THREE.RepeatWrapping;
-  groundTexture.repeat.set(4, 4);
+  groundTexture.repeat.set(10, 1000);
 
-  const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
-  ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMaterial);
+  ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 1000),
+    new THREE.MeshStandardMaterial({ map: groundTexture })
+  );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = 0;
   scene.add(ground);
@@ -251,51 +257,9 @@ function createPanel(x, z, rotY) {
 }
 
 // --- SPAWN ---
-function createObstacle() {
-  if (obstacleModels.length === 0) return;
-  const randomModel = obstacleModels[Math.floor(Math.random() * obstacleModels.length)];
-  const laneIndex = Math.floor(Math.random() * lanes.length);
+// (createObstacle, createMilkCarton, createShield, spawnObjects aynen kalacak)
 
-  const obstacle = randomModel.clone();
-  const bbox = new THREE.Box3().setFromObject(obstacle);
-  const offsetY = -bbox.min.y;
-  obstacle.position.set(lanes[laneIndex], offsetY, player.position.z - 50);
-  obstacle.rotation.y = Math.PI * 1.5;
-  scene.add(obstacle);
-  obstacles.push(obstacle);
-}
-
-function createMilkCarton(big = false) {
-  if (!milkCartonModel) return;
-  const milkCarton = milkCartonModel.clone();
-  const laneIndex = Math.floor(Math.random() * lanes.length);
-  milkCarton.position.set(lanes[laneIndex], 0.5, player.position.z - 50);
-  milkCarton.scale.set(big ? 1 : 0.5, big ? 1 : 0.5, big ? 1 : 0.5);
-  milkCarton.userData.type = big ? "bigMilk" : "milk";
-  scene.add(milkCarton);
-  milkCartons.push(milkCarton);
-}
-
-function createShield() {
-  if (!shieldModel || shieldActive) return;
-  const shield = shieldModel.clone();
-  const laneIndex = Math.floor(Math.random() * lanes.length);
-  shield.position.set(lanes[laneIndex], 0.5, player.position.z - 50);
-  shield.scale.set(0.7, 0.7, 0.7);
-  shield.userData.type = "shield";
-  scene.add(shield);
-  powerUps.push(shield);
-}
-
-function spawnObjects() {
-  const rand = Math.random();
-  if (rand < 0.05 && !shieldActive) createShield();
-  else if (rand < 0.1) createMilkCarton(true);
-  else if (rand < 0.4) createMilkCarton(false);
-  else createObstacle();
-}
-
-// --- START GAME ---
+// --- START / END GAME ---
 document.querySelectorAll(".difficulty-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const diff = btn.dataset.difficulty;
@@ -312,26 +276,10 @@ document.querySelectorAll(".difficulty-btn").forEach(btn => {
         action.setLoop(THREE.LoopOnce);
         action.clampWhenFinished = true;
         action.play();
-
-        action.onFinished = () => {
-          createDashedLaneLines();
-          startGame();
-        };
-
-        setTimeout(() => {
-          if (!gameStarted) {
-            createDashedLaneLines();
-            startGame();
-          }
-        }, 2000);
-      } else {
-        createDashedLaneLines();
-        startGame();
-      }
-    } else {
-      createDashedLaneLines();
-      startGame();
-    }
+        action.onFinished = () => { createDashedLaneLines(); startGame(); };
+        setTimeout(() => { if (!gameStarted) { createDashedLaneLines(); startGame(); } }, 2000);
+      } else { createDashedLaneLines(); startGame(); }
+    } else { createDashedLaneLines(); startGame(); }
   });
 });
 
@@ -348,7 +296,6 @@ function startGame() {
       mixer.timeScale = minSpeed;
     }
   }
-
   score = 0;
   gameStarted = true;
   gameOver = false;
@@ -359,7 +306,6 @@ function startGame() {
   backgroundMusic.play();
 }
 
-// --- END GAME ---
 function endGame() {
   gameOver = true;
   gameStarted = false;
@@ -407,24 +353,30 @@ function animate() {
   }
 
   if (player && gameStarted && !gameOver) {
-    // Player ilerliyor
-    const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
-    player.position.z -= speed; // negatif z yönü ile ileri hareket
-
-    // Player x pozisyonu için şerit geçişi
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
+    const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
 
-    // Kamera player’i takip ediyor
-    camera.position.z = player.position.z + 7;
-    camera.position.x = player.position.x;
-    camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
+    // --- Zemin kaydırma ---
+    groundTexture.offset.y -= speed * 0.1;
 
-    // Objeler player'e göre spawn olmuş durumda zaten, update sadece collision
+    // Lane çizgileri
+    laneLines.forEach(line => {
+      line.position.z += speed;
+      if (line.position.z > player.position.z + 5) line.position.z -= (lineDashLength + lineGap) * (laneLines.length / 2);
+    });
+
+    // Gallery
+    galleryPanelsLeft.forEach(p => { p.position.z += speed; if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING; });
+    galleryPanelsRight.forEach(p => { p.position.z += speed; if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING; });
+
+    // Obstacles, milkCartons, powerUps collision ve temizleme
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obstacle = obstacles[i];
-      if (player.position.z - obstacle.position.z < 1.5 &&
-          Math.abs(player.position.x - obstacle.position.x) < 1) {
+      obstacle.position.z += speed;
+      if (obstacle.position.z > 5) { scene.remove(obstacle); obstacles.splice(i, 1); }
+      if (Math.abs(player.position.x - obstacle.position.x) < 1 &&
+          Math.abs(player.position.z - obstacle.position.z) < 1.5) {
         hitSound.currentTime = 0; hitSound.play();
         if (shieldActive) { deactivateShield(); scene.remove(obstacle); obstacles.splice(i, 1); }
         else { endGame(); }
@@ -433,8 +385,10 @@ function animate() {
 
     for (let i = milkCartons.length - 1; i >= 0; i--) {
       const milkCarton = milkCartons[i];
-      if (player.position.z - milkCarton.position.z < 1.5 &&
-          Math.abs(player.position.x - milkCarton.position.x) < 1) {
+      milkCarton.position.z += speed;
+      if (milkCarton.position.z > 5) { scene.remove(milkCarton); milkCartons.splice(i, 1); }
+      if (Math.abs(player.position.x - milkCarton.position.x) < 1 &&
+          Math.abs(player.position.z - milkCarton.position.z) < 1) {
         score += milkCarton.userData.type === "bigMilk" ? 200 : 10;
         scoreBoard.innerText = `Score: ${score}`;
         scene.remove(milkCarton); milkCartons.splice(i, 1);
@@ -444,8 +398,10 @@ function animate() {
 
     for (let i = powerUps.length - 1; i >= 0; i--) {
       const powerUp = powerUps[i];
-      if (player.position.z - powerUp.position.z < 1.5 &&
-          Math.abs(player.position.x - powerUp.position.x) < 1) {
+      powerUp.position.z += speed;
+      if (powerUp.position.z > 5) { scene.remove(powerUp); powerUps.splice(i, 1); }
+      if (Math.abs(player.position.x - powerUp.position.x) < 1 &&
+          Math.abs(player.position.z - powerUp.position.z) < 1) {
         if (powerUp.userData.type === "shield") activateShield();
         scene.remove(powerUp); powerUps.splice(i, 1);
         collectSound.currentTime = 0; collectSound.play();
