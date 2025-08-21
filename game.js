@@ -104,6 +104,7 @@ window.addEventListener("resize", () => {
 });
 
 // --- INIT ---
+let ground, groundTexture;
 function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87ceeb);
@@ -122,11 +123,17 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 1000),
-    new THREE.MeshStandardMaterial({ color: 0x228B22 })
-  );
+  // Zemin için grass.jpg dokusu
+  const texLoader = new THREE.TextureLoader();
+  groundTexture = texLoader.load("grass.jpg");
+  groundTexture.wrapS = THREE.RepeatWrapping;
+  groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.repeat.set(4, 200); // genişlik ve uzunluk tekrar oranı
+
+  const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
+  ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMaterial);
   ground.rotation.x = -Math.PI / 2;
+  ground.position.y = 0;
   scene.add(ground);
 
   preloadBillboardTextures();
@@ -314,7 +321,6 @@ document.querySelectorAll(".difficulty-btn").forEach(btn => {
         };
 
         setTimeout(() => {
-          // Eğer onFinished tetiklenmezse 2 saniye sonra zorla başlat
           if (!gameStarted) {
             createDashedLaneLines();
             startGame();
@@ -406,6 +412,11 @@ function animate() {
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
     const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
+
+    // Zemin hareket efekti
+    if (groundTexture) {
+      groundTexture.offset.y -= speed * 0.02;
+    }
 
     laneLines.forEach(line => {
       line.position.z += speed;
