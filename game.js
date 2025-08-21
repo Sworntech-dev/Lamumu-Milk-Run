@@ -127,7 +127,7 @@ function init() {
   groundTexture = texLoader.load("grass.jpg");
   groundTexture.wrapS = THREE.RepeatWrapping;
   groundTexture.wrapT = THREE.RepeatWrapping;
-  groundTexture.repeat.set(4, 200);
+  groundTexture.repeat.set(4, 1); // sadece x tekrar, z sabit
 
   const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
   ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMaterial);
@@ -259,7 +259,7 @@ function createObstacle() {
   const obstacle = randomModel.clone();
   const bbox = new THREE.Box3().setFromObject(obstacle);
   const offsetY = -bbox.min.y;
-  obstacle.position.set(lanes[laneIndex], offsetY, -50);
+  obstacle.position.set(lanes[laneIndex], offsetY, player.position.z - 50); // player önünde spawn
   obstacle.rotation.y = Math.PI * 1.5;
   scene.add(obstacle);
   obstacles.push(obstacle);
@@ -269,7 +269,7 @@ function createMilkCarton(big = false) {
   if (!milkCartonModel) return;
   const milkCarton = milkCartonModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  milkCarton.position.set(lanes[laneIndex], 0.5, -50);
+  milkCarton.position.set(lanes[laneIndex], 0.5, player.position.z - 50); // player önünde spawn
   milkCarton.scale.set(big ? 1 : 0.5, big ? 1 : 0.5, big ? 1 : 0.5);
   milkCarton.userData.type = big ? "bigMilk" : "milk";
   scene.add(milkCarton);
@@ -280,7 +280,7 @@ function createShield() {
   if (!shieldModel || shieldActive) return;
   const shield = shieldModel.clone();
   const laneIndex = Math.floor(Math.random() * lanes.length);
-  shield.position.set(lanes[laneIndex], 0.5, -50);
+  shield.position.set(lanes[laneIndex], 0.5, player.position.z - 50); // player önünde spawn
   shield.scale.set(0.7, 0.7, 0.7);
   shield.userData.type = "shield";
   scene.add(shield);
@@ -407,31 +407,39 @@ function animate() {
   }
 
   if (player && gameStarted && !gameOver) {
+    // Lane geçiş
     const targetX = lanes[currentLane];
     player.position.x += (targetX - player.position.x) * 0.1;
+
     const speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
+
+    // Kamera/player ilerliyor hissi
+    camera.position.z = player.position.z + 7;
+    camera.lookAt(player.position);
+
+    player.position.z -= speed; // ileri hareket
 
     // Lane çizgileri
     laneLines.forEach(line => {
-      line.position.z += speed;
-      if (line.position.z > player.position.z + 5) line.position.z -= (lineDashLength + lineGap) * (laneLines.length / 2);
+      line.position.z -= speed;
+      if (line.position.z < player.position.z - 50) line.position.z += (lineDashLength + lineGap) * (laneLines.length / 2);
     });
 
     // Gallery paneller
     galleryPanelsLeft.forEach(p => {
-      p.position.z += speed;
-      if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
+      p.position.z -= speed;
+      if (p.position.z < player.position.z - 50) p.position.z += GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
     });
     galleryPanelsRight.forEach(p => {
-      p.position.z += speed;
-      if (p.position.z > 10) p.position.z -= GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
+      p.position.z -= speed;
+      if (p.position.z < player.position.z - 50) p.position.z += GALLERY_COUNT_PER_SIDE * GALLERY_SPACING;
     });
 
-    // Obstacle çarpışma kontrolü
+    // Obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obstacle = obstacles[i];
-      obstacle.position.z += speed;
-      if (obstacle.position.z > 5) { scene.remove(obstacle); obstacles.splice(i, 1); }
+      obstacle.position.z -= speed;
+      if (obstacle.position.z > player.position.z + 5) { scene.remove(obstacle); obstacles.splice(i, 1); }
       if (Math.abs(player.position.x - obstacle.position.x) < 1 &&
           Math.abs(player.position.z - obstacle.position.z) < 1.5) {
         hitSound.currentTime = 0; hitSound.play();
@@ -440,11 +448,11 @@ function animate() {
       }
     }
 
-    // MilkCarton çarpışma
+    // MilkCartons
     for (let i = milkCartons.length - 1; i >= 0; i--) {
       const milkCarton = milkCartons[i];
-      milkCarton.position.z += speed;
-      if (milkCarton.position.z > 5) { scene.remove(milkCarton); milkCartons.splice(i, 1); }
+      milkCarton.position.z -= speed;
+      if (milkCarton.position.z > player.position.z + 5) { scene.remove(milkCarton); milkCartons.splice(i, 1); }
       if (Math.abs(player.position.x - milkCarton.position.x) < 1 &&
           Math.abs(player.position.z - milkCarton.position.z) < 1) {
         score += milkCarton.userData.type === "bigMilk" ? 200 : 10;
@@ -454,11 +462,11 @@ function animate() {
       }
     }
 
-    // PowerUp çarpışma
+    // PowerUps
     for (let i = powerUps.length - 1; i >= 0; i--) {
       const powerUp = powerUps[i];
-      powerUp.position.z += speed;
-      if (powerUp.position.z > 5) { scene.remove(powerUp); powerUps.splice(i, 1); }
+      powerUp.position.z -= speed;
+      if (powerUp.position.z > player.position.z + 5) { scene.remove(powerUp); powerUps.splice(i, 1); }
       if (Math.abs(player.position.x - powerUp.position.x) < 1 &&
           Math.abs(player.position.z - powerUp.position.z) < 1) {
         if (powerUp.userData.type === "shield") activateShield();
