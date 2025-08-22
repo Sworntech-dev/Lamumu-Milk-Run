@@ -102,35 +102,32 @@ function init(){
     renderer.setSize(window.innerWidth,window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // Gradient gece gökyüzü plane
+    const skyGeo = new THREE.PlaneGeometry(1000,1000);
+    const skyMat = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        side: THREE.BackSide
+    });
+    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+    skyMesh.rotation.x = Math.PI/2;
+    const colors = [];
+    const topColor = new THREE.Color(0x0a0a30); // koyu gece
+    const bottomColor = new THREE.Color(0x101040); // alt kısım biraz daha açık
+    const vertices = skyGeo.attributes.position;
+    for(let i=0;i<vertices.count;i++){
+        if(vertices.getY(i)>0) colors.push(topColor.r, topColor.g, topColor.b);
+        else colors.push(bottomColor.r, bottomColor.g, bottomColor.b);
+    }
+    skyGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+    scene.add(skyMesh);
+
+    // Yıldızlar
+    createStars(2000);
+
     const light=new THREE.DirectionalLight(0xffffff,1);
     light.position.set(5,10,7);
     scene.add(light);
     scene.add(new THREE.AmbientLight(0xffffff,0.5));
-
-    // --- Basit gradient gece gökyüzü ---
-    const nightGeo = new THREE.PlaneGeometry(1000, 500);
-    const nightMat = new THREE.ShaderMaterial({
-        vertexShader: `
-            varying vec2 vUv;
-            void main(){
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-            }
-        `,
-        fragmentShader: `
-            varying vec2 vUv;
-            void main(){
-                vec3 topColor = vec3(0.02,0.05,0.2);
-                vec3 bottomColor = vec3(0.05,0.1,0.3);
-                vec3 color = mix(bottomColor, topColor, vUv.y);
-                gl_FragColor = vec4(color,1.0);
-            }
-        `,
-        side: THREE.BackSide
-    });
-    const nightPlane = new THREE.Mesh(nightGeo, nightMat);
-    nightPlane.position.set(0,250,-500);
-    scene.add(nightPlane);
 
     // Zemin
     const texLoader = new THREE.TextureLoader();
@@ -164,6 +161,22 @@ function createDashedLaneLines(){
             laneLines.push(line);
         });
     }
+}
+
+// --- Yıldızlar (Points) ---
+function createStars(count=1000){
+    const starGeo = new THREE.BufferGeometry();
+    const positions = [];
+    for(let i=0;i<count;i++){
+        const x = (Math.random()-0.5)*1000;
+        const y = Math.random()*500 + 50;
+        const z = (Math.random()-0.5)*1000 - 200;
+        positions.push(x,y,z);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+    const starMat = new THREE.PointsMaterial({color:0xffffff,size:1});
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
 }
 
 // --- Load models ---
