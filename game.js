@@ -92,8 +92,10 @@ window.addEventListener("resize",()=>{
 
 // --- INIT ---
 let ground, groundTexture;
+let stars;
 function init(){
     scene=new THREE.Scene();
+    scene.background = new THREE.Color(0x000000); // Tamamen siyah gökyüzü
 
     camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
     camera.position.set(0,3,7);
@@ -101,28 +103,6 @@ function init(){
     renderer=new THREE.WebGLRenderer({antialias:true});
     renderer.setSize(window.innerWidth,window.innerHeight);
     document.body.appendChild(renderer.domElement);
-
-    // Gradient gece gökyüzü plane
-    const skyGeo = new THREE.PlaneGeometry(1000,1000);
-    const skyMat = new THREE.MeshBasicMaterial({
-        vertexColors: true,
-        side: THREE.BackSide
-    });
-    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
-    skyMesh.rotation.x = Math.PI/2;
-    const colors = [];
-    const topColor = new THREE.Color(0x0a0a30); // koyu gece
-    const bottomColor = new THREE.Color(0x101040); // alt kısım biraz daha açık
-    const vertices = skyGeo.attributes.position;
-    for(let i=0;i<vertices.count;i++){
-        if(vertices.getY(i)>0) colors.push(topColor.r, topColor.g, topColor.b);
-        else colors.push(bottomColor.r, bottomColor.g, bottomColor.b);
-    }
-    skyGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
-    scene.add(skyMesh);
-
-    // Yıldızlar
-    createStars(2000);
 
     const light=new THREE.DirectionalLight(0xffffff,1);
     light.position.set(5,10,7);
@@ -140,6 +120,21 @@ function init(){
     ground.rotation.x = -Math.PI/2;
     ground.position.y = 0;
     scene.add(ground);
+
+    // Yıldızlar
+    const starCount = 1000;
+    const starGeo = new THREE.BufferGeometry();
+    const starVertices = [];
+    for(let i=0;i<starCount;i++){
+        const x = (Math.random()-0.5)*200;
+        const y = Math.random()*100+10;
+        const z = (Math.random()-0.5)*200;
+        starVertices.push(x,y,z);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices,3));
+    const starMat = new THREE.PointsMaterial({color:0xffffff, size:0.2});
+    stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
 
     preloadBillboardTextures();
     loadModels();
@@ -161,22 +156,6 @@ function createDashedLaneLines(){
             laneLines.push(line);
         });
     }
-}
-
-// --- Yıldızlar (Points) ---
-function createStars(count=1000){
-    const starGeo = new THREE.BufferGeometry();
-    const positions = [];
-    for(let i=0;i<count;i++){
-        const x = (Math.random()-0.5)*1000;
-        const y = Math.random()*500 + 50;
-        const z = (Math.random()-0.5)*1000 - 200;
-        positions.push(x,y,z);
-    }
-    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
-    const starMat = new THREE.PointsMaterial({color:0xffffff,size:1});
-    const stars = new THREE.Points(starGeo, starMat);
-    scene.add(stars);
 }
 
 // --- Load models ---
@@ -414,6 +393,7 @@ function animate(){
                 else{endGame();}
             }
         }
+
 
         // Milk
         for(let i=milkCartons.length-1;i>=0;i--){
