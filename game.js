@@ -43,7 +43,7 @@ const powerUps = [];
 let obstacleModels = [];
 let milkCartonModel, shieldModel;
 
-// Billboard / gallery
+// Billboard
 const galleryPanelsLeft = [];
 const galleryPanelsRight = [];
 const billboardTextures = [];
@@ -114,11 +114,11 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Gece ışıkları
+  // Işıklar (geceye uygun)
   const light = new THREE.DirectionalLight(0xffffff, 0.7);
   light.position.set(5, 10, 7);
   scene.add(light);
-  scene.add(new THREE.AmbientLight(0x444488, 0.6)); // Loş mavi ışık
+  scene.add(new THREE.AmbientLight(0x444488, 0.6));
 
   // Gece arka planı
   const texLoader = new THREE.TextureLoader();
@@ -131,7 +131,7 @@ function init() {
   groundTexture = texLoader.load("grass.jpg");
   groundTexture.wrapS = THREE.RepeatWrapping;
   groundTexture.wrapT = THREE.RepeatWrapping;
-  groundTexture.repeat.set(4, 200);
+  groundTexture.repeat.set(4, 100);
   const groundMat = new THREE.MeshStandardMaterial({ map: groundTexture });
   ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 1000), groundMat);
   ground.rotation.x = -Math.PI / 2;
@@ -309,16 +309,10 @@ document.querySelectorAll(".difficulty-btn").forEach((btn) => {
         action.setLoop(THREE.LoopOnce);
         action.clampWhenFinished = true;
         action.play();
-        action.onFinished = () => {
+        setTimeout(() => {
           createDashedLaneLines();
           startGame();
-        };
-        setTimeout(() => {
-          if (!gameStarted) {
-            createDashedLaneLines();
-            startGame();
-          }
-        }, 2000);
+        }, 1500);
       } else {
         createDashedLaneLines();
         startGame();
@@ -406,13 +400,13 @@ function animate() {
     player.position.x += (targetX - player.position.x) * 0.1;
     speed = mixer ? mixer.timeScale * 0.1 : minSpeed * 0.1;
 
-    // Gece arka planı kaydır
+    // Arka plan kaydır (gece hissi)
     nightOffset -= speed * 0.02;
     if (nightOffset <= -1) nightOffset = 0;
     nightTexture.offset.x = nightOffset;
 
-    // Zemin kaydır
-    groundTexture.offset.y += speed * 0.2;
+    // Zemin kaydır (önden arkaya)
+    groundTexture.offset.y -= speed * 0.2;
 
     laneLines.forEach((line) => {
       line.position.z += speed;
