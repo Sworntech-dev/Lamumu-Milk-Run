@@ -4,6 +4,7 @@ const gameOverOverlay = document.getElementById("gameOverOverlay");
 const scoreBoard = document.getElementById("scoreBoard");
 const restartButton = document.getElementById("restartButton");
 const finalScoreText = document.getElementById("finalScoreText");
+const roleMessage = document.getElementById("roleMessage"); // Rol yazısı
 
 // Shield timer UI
 const shieldTimerUI = document.createElement("div");
@@ -324,9 +325,20 @@ function endGame(){
     gameStarted=false;
     if(mixer) mixer.stopAllAction();
     finalScoreText.innerText=`Final Score: ${score}`;
+    roleMessage.innerText = getRoleMessage(score); // Rol mesajını göster
     gameOverOverlay.style.display="flex";
     backgroundMusic.pause();
     gameOverSound.currentTime=0;gameOverSound.play();
+}
+
+// Rol belirleme
+function getRoleMessage(score){
+    if(score < 250) return "You earned the role: Verified Moo";
+    if(score < 500) return "You earned the role: Lamumu Member";
+    if(score < 750) return "You earned the role: Milker";
+    if(score < 1000) return "You earned the role: Grass";
+    if(score < 1500) return "You earned the role: Calfy";
+    return "You earned the role: Lamoolist";
 }
 
 // --- Shield ---

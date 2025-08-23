@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LAMUMU MILK RUN</title>
 <style>
-    body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background-color: #87ceeb; }
+    body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background-color: #000; }
     canvas { display: block; }
 
     #overlay, #gameOverOverlay {
@@ -20,7 +20,7 @@
         content: "";
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.6); /* koyu filtre */
+        background-color: rgba(0, 0, 0, 0.6);
         z-index: -1;
     }
 
@@ -48,6 +48,30 @@
     .bottom-left img { border-radius: 10px; width: 70px; }
     .bottom-right a, .bottom-left a { color: #1DA1F2; font-size: 0.7em; text-decoration: none; }
     .bottom-right a:hover, .bottom-left a:hover { text-decoration: underline; }
+
+    #roleMessage {
+        font-size: 1.2em;
+        margin-top: 10px;
+        font-weight: bold;
+        color: #FFD700; /* Altın renk */
+        text-shadow: 1px 1px 4px #000;
+    }
+
+    #restartButton {
+        padding: 12px 25px;
+        font-size: 1em;
+        background-color: #FF4500;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        margin-top: 15px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+    #restartButton:hover {
+        background-color: #e03e00;
+        transform: translateY(-2px);
+    }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -56,6 +80,7 @@
 </head>
 <body>
 
+<!-- Başlangıç Menüsü -->
 <div id="overlay">
     <h1>LAMUMU MILK RUN</h1>
     <div>
@@ -74,9 +99,11 @@
     </div>
 </div>
 
+<!-- Game Over Ekranı -->
 <div id="gameOverOverlay" style="display: none;">
     <h1>Game Over!</h1>
     <p id="finalScoreText"></p>
+    <p id="roleMessage"></p>
     <button id="restartButton">Restart</button>
 
     <div class="bottom-right">
@@ -89,6 +116,7 @@
     </div>
 </div>
 
+<!-- Skor -->
 <p id="scoreBoard">Score: 0</p>
 
 <script src="game.js"></script>
